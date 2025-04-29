@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<settings>
+    <!-- File Selection -->
+    <category label="File Selection">
+        <setting id="file_extensions" type="text" label="File extensions" default=".mp4,.mkv,.avi,.mov,.wmv"/>
+        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,trailer"/>
+        <setting id="exclude_folders" type="text" label="Exclude folders (comma separated)" default="XTRA,"/>
+        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="10"/>
+        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true"/>
+        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false"/>
+        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="eq(-1,true)"/>
+    </category>
+
+    <!-- Sorting -->
+    <category label="Sorting">
+        <setting id="folder_sort_mode" type="enum" label="Folder sort mode"
+            values="None|Recently Modified|A-Z|Z-A|Custom Order" default="0"/>
+        <setting id="custom_folder_order" type="text" label="Custom folder order (comma separated)" default="" enable="eq(-1,3)"/>
+        <setting id="file_sort_mode" type="enum" label="File sort mode"
+            values="Newest First|A-Z|Z-A|Random|File Size (Smallest)|File Size (Largest)|Duration (Shortest)|Duration (Longest)" default="0"/>
+        <setting id="newest_files" type="number" label="Newest files to top (0=disable)" default="0"/>
+        <setting id="limit_mode" type="enum" label="Limit mode" values="Per folder|Total files" default="0"/>
+        <setting id="file_count" type="number" label="Files per folder" default="20" enable="!eq(-1,1)"/>
+        <setting id="total_file_count" type="number" label="Total files" default="200" enable="eq(-2,1)"/>
+        <setting id="max_scan_depth" type="enum" label="Max Folder Depth" values="1|2|3" default="2" enable="!eq(-1,0)">
+            <description>Deeper scans use more memory</description>
+        </setting>
+    </category>
+
+    <!-- Display -->
+    <category label="Display">
+        <setting id="show_folder_names" type="bool" label="Show folder names" default="true"/>
+        <setting id="show_metadata" type="bool" label="Show metadata tags" default="false"/>
+        <setting id="show_duration" type="bool" label="Show duration" default="false"/>
+    </category>
+
+    <!-- Operation Mode -->
+    <category label="Operation">
+        <setting id="operation_mode" type="enum" label="Operation Mode" values="Foreground|Background|Background Notify" default="1">
+            <description>Foreground shows progress dialogs, Background runs silently</description>
+        </setting>
+        <setting id="enable_error_popups" type="bool" label="Show error notifications" default="true" enable="!eq(-1,1)"/>
+        <setting id="file_batch_size" type="enum" label="Memory Usage" 
+            values="Low (50 files/batch)|Medium (100)|High (200)" default="0" 
+            enable="eq(../operation_mode,1)">
+            <description>Smaller batches use less RAM</description>
+        </setting>
+    </category>
+
+    <!-- Backup -->
+    <category label="Backup">
+        <setting id="enable_backups" type="bool" label="Enable playlist backups" default="true"/>
+        <setting id="max_backups" type="number" label="Max backup copies" default="1" enable="eq(-1,true)"/>
+    </category>
+
+    <!-- Scheduled Updates -->
+    <category label="Scheduled Updates">
+        <setting id="enable_timer" type="bool" label="Enable scheduled updates" default="false"/>
+        <setting id="update_interval" type="enum" label="Update interval" values="Hourly|Daily|Weekly" default="1" enable="eq(-1,true)"/>
+        <setting id="update_time" type="text" label="Update time (HH:MM)" default="03:00" enable="eq(-2,true)"/>
+        <setting id="last_update" type="text" label="Last update" default="Never" enable="false"/>
+    </category>
+
+    <!-- Chatbot Settings -->
+    <category label="Chatbot">
+        <setting id="chatbot_enabled" type="bool" label="Enable Chatbot Feature" default="true"/>
+        <setting id="chatbot_timeout" type="number" label="Chat Timeout (seconds)" default="300"/>
+    </category>
+
+    <!-- Hidden Settings (Only visible when editing folder sets) -->
+    <category label="Integrations &amp; Tagging" visible="false">
+        <setting id="scan_as" type="enum" label="Content Type" values="Regular Files|Youtube Videos|Music Videos|Adult Content|Adult (LGBTQ)|Shorts|File Name Only" default="0"/>
+        <setting id="tags" type="text" label="Extra Tags (comma separated)" default=""/>
+    </category>
+</settings>
