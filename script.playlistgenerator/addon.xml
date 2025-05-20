@@ -1,48 +1,34 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="script.playlistgenerator" name="Playlist [COLOR gold]G[/COLOR]-enerator Plus" version="2.3.7" provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
+<addon id="script.playlistgenerator"
+       name="Playlist [COLOR gold]G[/COLOR]-enerator"
+       version="2.1.17"
+       provider-name="G-Thang-Code Master">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
     </requires>
-
     <extension point="xbmc.python.script" library="default.py">
-        <provides>executable context.item</provides>
+        <provides>executable</provides>
     </extension>
-
     <extension point="xbmc.addon.metadata">
-        <summary lang="en">Lightweight Playlist Generator</summary>
+        <summary lang="en">Generates playlists for your 'Hard-to-scrape' video collections.</summary>
         <description lang="en">
-            Generates video playlists from local and cloud collections, specialized for 'hard-to-organize' video libraries.
-            Includes advanced file filtering, sorting, and rotation. Also features a robust context-menu downloader.
+            Lightweight utility to create and manage playlists for video content that isn't typically scraped by Kodi,
+            such as local collections, cloud sources (DAVs, SMB, FTP), and personal recordings.
         </description>
+        <disclaimer lang="en">This addon does not provide content.
+            It is a tool for organizing your existing video files into playlists.
+        </disclaimer>
         <platform>all</platform>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
         </assets>
         <news>
-            v2.3.7:
-            - addon.xml 2.3.4 and default 70 to 33 lines
+            v2.1.17: Fixed NameError related to 'Optional' type hint in utils.py.
+            v2.1.16: Ensured context menu download script (menu_download.py) is fully compatible with latest changes.
+            v2.1.15: Fixed core creation/scan failures, improved settings organization, enhanced navigation,
+            added new display options (file size, path level, numbering), implemented new playlist limits (per folder, per playlist, scan depth),
+            added adult download path setting. Removed 'Scan without playlist' feature.
         </news>
-    </extension>
-
-    <extension point="kodi.context.item">
-        <menu id="kodi.core.main">
-            <item library="menu_download.py">
-                <label>Download with Playlist G-enerator</label>
-                <visible>ListItem.IsFolder |
-                    [String.EndsWith(ListItem.Path,.mp4) | String.EndsWith(ListItem.Path,.mkv) | String.EndsWith(ListItem.Path,.avi) | String.EndsWith(ListItem.Path,.mov) | String.EndsWith(ListItem.Path,.wmv)] + System.GetBool(Addon.script.playlistgenerator.enable_download)</visible>
-                <args>action=download&amp;url=$INFO[ListItem.Path]</args>
-            </item>
-        </menu>
-    </extension>
-
-    <extension point="kodi.context.item">
-        <menu id="kodi.core.main">
-            <item library="menu_download.py">
-                <label>Download this video with Playlist G-enerator</label>
-                <visible>Player.HasVideo + System.GetBool(Addon.script.playlistgenerator.enable_download)</visible>
-                <args>action=download&amp;url=$INFO[Player.FilenameAndPath]</args>
-            </item>
-        </menu>
     </extension>
 </addon>

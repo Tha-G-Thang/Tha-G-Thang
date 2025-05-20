@@ -1,53 +1,53 @@
 import sys
 import xbmc
 import urllib.parse
+import os # Added for os.path.basename
 
-# Ensure necessary modules are imported.
-# It's good practice to wrap imports in a try-except block in Kodi addons
-# to catch issues if files are missing or corrupted.
+# Import necessary modules
 try:
     import resources.lib.utils as utils
-    from resources.lib.playlist_manager import PlaylistManager
+    import resources.lib.downloader as downloader
 except ImportError as e:
-    # Log the error and exit gracefully if essential modules can't be imported.
-    xbmc.log(f"[Playlist Generator] menu_download.py: Failed to import internal modules: {e}", xbmc.LOGERROR)
-    sys.exit(1) # Exit immediately if essential modules can't be imported
+    xbmc.log(f"[Playlist Generator] menu_download.py: Failed to import necessary modules: {e}", xbmc.LOGERROR)
+    sys.exit()
 
 if __name__ == '__main__':
-    # Initialize addon globals and the PlaylistManager.
-    # This is crucial because menu_download.py is now the direct entry point
-    # for download actions from context menus, and it needs access to these utilities.
-    utils.init_addon_globals()
-    manager = PlaylistManager()
+    # No need for utils.init_addon_globals() as global vars are initialized on utils import
+    
+    # sys.argv[0] is the script path, sys.argv[1] is handle, sys.argv[2] is the query string
+    args = utils.parse_url(sys.argv[2]) # Use the updated parse_url from utils
 
-    # Parse arguments from Kodi.
-    # For context menu items, sys.argv[1] typically contains the query string (e.g., "action=download&url=path/to/file").
-    if len(sys.argv) > 1:
-        args_str = sys.argv[1]
+    action = args.get('action')
+    url = args.get('url')
+
+    if action == 'download' and url:
+        # Check if download is enabled in settings
+        if not utils.get_setting('enable_download', 'bool'):
+            utils.show_notification(utils.ADDON_NAME, "Download feature is disabled in settings.", time=3000)
+            utils.log("[Playlist Generator] Download action attempted but feature is disabled.", xbmc.LOGWARNING)
+            sys.exit()
+
+        utils.log(f"Initiating download from context menu in menu_download.py. URL: {url}", xbmc.LOGINFO)
         
-        # urllib.parse.parse_qs expects the string to not start with '?' for parsing
-        # but context menu args sometimes include it, sometimes not.
-        # Ensure it starts with '?' before parsing to get consistent behavior.
-        if not args_str.startswith('?'):
-            args_str = '?' + args_str
-            
-        # Parse the query string into a dictionary.
-        # We slice from index 1 to remove the leading '?' for parse_qs.
-        args = urllib.parse.parse_qs(args_str[1:])
+        download_path = utils.get_setting('download_path', 'folder')
+        adult_download_path = utils.get_setting('download_path_adult', 'folder')
+        
+        # Determine actual download path based on adult content indicator
+        final_download_path = download_path
+        # Check for adult content indicator in the URL itself (common for direct download links)
+        if utils.get_setting('enable_adult_cleanup', 'bool') and adult_download_path and utils.get_setting('adult_content_indicator', 'text') in url.lower():
+             final_download_path = adult_download_path
+        
+        # Also check if adult_content_indicator is present in the filename part of the URL path
+        filename_from_url = os.path.basename(urllib.parse.urlparse(url).path)
+        if utils.get_setting('enable_adult_cleanup', 'bool') and adult_download_path and utils.get_setting('adult_content_indicator', 'text') in filename_from_url.lower():
+            final_download_path = adult_download_path
 
-        # Extract 'action' and 'url' from the parsed arguments.
-        # .get('key', [None])[0] safely gets the first value from the list returned by parse_qs, or None.
-        action = args.get('action', [None])[0]
-        url = args.get('url', [None])[0]
+        if not final_download_path:
+            utils.show_ok_dialog(utils.ADDON_NAME, "Download path is not set in addon settings. Please configure it.")
+            utils.log("[Playlist Generator] Download failed: Download path is not configured.", xbmc.LOGERROR)
+            sys.exit()
 
-        # Log received arguments for debugging
-        utils.log(f"[Playlist Generator] menu_download.py received action: {action}, URL: {url}", xbmc.LOGDEBUG)
-
-        # Execute the download action if both action and URL are present.
-        if action == 'download' and url:
-            manager.run_download_action(url)
-        else:
-            utils.log(f"[Playlist Generator] menu_download.py: Unknown action or missing URL. Action: {action}, URL: {url}", xbmc.LOGWARNING)
+        downloader.download_file(url, final_download_path)
     else:
-        # Log if no arguments were passed, which shouldn't happen for context menu calls.
-        utils.log("[Playlist Generator] menu_download.py: No arguments received. Exiting.", xbmc.LOGWARNING)
+        utils.log(f"[Playlist Generator] menu_download.py: Unknown action or missing URL. Action: {action}, URL: {url}", xbmc.LOGWARNING)
