@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+    <category>
+        <setting id="file_extensions" type="text" default=".mp4|.mkv|.avi" />
+        <setting id="exclude_pattern" type="text" default="sample|trailer|bonus" />
+        <setting id="min_file_size" type="number" default="0" />
+        <setting id="enable_max_size" type="bool" default="false" />
+        <setting id="max_file_size" type="number" default="1000000000" />
+        <setting id="enable_date_filter" type="bool" default="false" />
+        <setting id="min_file_date" type="date" default="2000-01-01" />
+        <setting id="scan_depth" type="number" default="1" />
+        <setting id="exclude_folders" type="text" default="extras|deleted" />
+    </category>
+
+    <category>
+        <setting id="sort_mode" type="enum" values="Random|Creation Date (Ascending)|Creation Date (Descending)|File Size (Ascending)|File Size (Descending)|Name (Ascending)|Name (Descending)|Duration (Ascending)|Duration (Descending)" default="0" />
+        <setting id="enable_playlist_limit" type="bool" default="false" />
+        <setting id="limit_mode" type="enum" values="File Count|Total File Size (MB)" default="0" />
+        <setting id="file_count" type="number" default="100" />
+        <setting id="total_file_count" type="number" default="1000" />
+        <setting id="enable_rotation" type="bool" default="false" />
+        <setting id="rotation_offset" type="number" default="0" />
+    </category>
+
+    <category>
+        <setting id="enable_display_name_color" type="bool" default="false" />
+        <setting id="folder_name_color" type="color" default="0xFFFFFFFF" />
+        <setting id="enable_download" type="bool" default="false" />
+        <setting id="download_path" type="folder" default="" />
+        <setting id="download_filename_cleanup" type="bool" default="true" />
+        <setting id="download_filename_delete_words" type="text" default="sample|trailer|bonus" />
+        <setting id="download_filename_switch_words" type="text" default="" />
+        <setting id="download_filename_regex" type="bool" default="false" />
+        <setting id="download_filename_regex_pattern" type="text" default=".*" />
+        <setting id="download_filename_regex_replace" type="text" default="" />
+    </category>
+
+    <category>
+        <setting id="sets" type="none" />
+    </category>
+</settings>
