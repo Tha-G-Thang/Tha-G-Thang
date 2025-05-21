@@ -1,43 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <category label="General">
-        <setting id="file_extensions" type="text" default=".mp4|.mkv|.avi|.mov|.flv|.wmv|.webm|.m4v" label="Video File Extensions" help="Comma-separated list of video file extensions to include in playlists."/>
-        <setting id="exclude_pattern" type="text" default="sample|trailer|bonus" label="Exclude Filenames Containing" help="Comma-separated list of words/patterns to exclude from playlist filenames."/>
-        <setting id="min_file_size" type="number" default="5" label="Minimum File Size (MB)" help="Minimum file size (in MB) to include."/>
-        <setting id="enable_max_size" type="bool" default="false" label="Enable Maximum File Size Filter"/>
-        <setting id="max_file_size" type="number" default="1000000000" label="Maximum File Size (MB)" enable="eq(-1,true)" help="Maximum file size (in MB) to include."/>
-        <setting id="enable_date_filter" type="bool" default="false" label="Enable Date Filter"/>
-        <setting id="min_file_date" type="date" default="2000-01-01" label="Minimum File Date" enable="eq(-1,true)" help="Include files newer than this date."/>
+    <category label="File Selection">
+        <setting id="file_extensions" type="text" label="File extensions" default=".mp4,.mkv,.avi,.mov,.wmv"/>
+        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,trailer"/>
+        <setting id="exclude_folders" type="text" label="Exclude folders (comma separated)" default=""/>
+        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="50"/>
+        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false"/>
+        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="eq(-1,true)"/>
+        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true"/>
     </category>
 
-    <category label="Playlist & Set Creation">
-        <setting id="sort_mode" type="enum" values="Random|Creation Date (Ascending)|Creation Date (Descending)|File Size (Ascending)|File Size (Descending)|Name (Ascending)|Name (Descending)" default="2" label="Sort Mode"/>
-        <setting id="enable_playlist_limit" type="bool" default="false" label="Enable Playlist Limiting"/>
-        <setting id="limit_by_method" type="enum" values="Max Files Per Playlist|Max Total Size (MB) Per Playlist|Max Files Per Folder|Scan Depth" default="0" label="Limit By Method" enable="eq(-1,true)"/>
-        <setting id="max_files_playlist" type="number" default="100" label="Max Files Per Playlist" enable="eq(-1,0)"/>
-        <setting id="max_total_size_playlist" type="number" default="1000" label="Max Total Size (MB) Per Playlist" enable="eq(-2,1)"/>
-        <setting id="max_files_folder" type="number" default="100" label="Max Files Per Folder" enable="eq(-3,2)"/>
-        <setting id="scan_depth" type="number" default="5" label="Scan Depth (Subfolders)" help="Maximum depth for scanning subfolders. 0 for current folder only, 1 for current + one level down, etc." enable="eq(-4,3)"/>
+    <category label="Sorting">
+        <setting id="sort_mode" type="enum" label="File sort method" values="Newest First|A-Z|Z-A|Random|File Size (Smallest)|File Size (Largest)|Duration (Shortest)|Duration (Longest)" default="0"/>
+        <setting id="folder_sort_mode" type="enum" label="Folder sorting" values="None|A-Z|Z-A|Custom Order" default="0"/>
+        <setting id="custom_folder_order" type="text" label="Custom folder order (comma separated)" default="" enable="eq(-1,3)"/>
+        <setting id="newest_files" type="number" label="Number of newest files to prioritize" default="0"/>
+        <setting id="limit_mode" type="enum" label="Limit mode" values="Per folder|Total files" default="0"/>
+        <setting id="file_count" type="number" label="Files per folder" default="20" enable="!eq(-1,1)"/>
+        <setting id="total_file_count" type="number" label="Total files" default="100" enable="eq(-2,1)"/>
     </category>
 
     <category label="Display">
-        <setting id="color_foldername" type="bool" default="false" label="Color Folder Name in Playlist"/>
-        <setting id="foldername_color" type="color" default="FFFFFFFF" label="Folder Name Color"/>
-        <setting id="show_foldername_in_playlist" type="bool" default="true" label="Show folder name in .m3u entries"/>
-        <setting id="show_file_size_display" type="bool" default="false" label="Show File Size in Display Name"/>
-        <setting id="path_display_level" type="enum" values="Full Path|Relative Path|Filename Only" default="0" label="Path Display Level"/>
-        <setting id="item_numbering_display" type="bool" default="false" label="Show Item Numbering"/>
+        <setting id="show_folder_names" type="bool" label="Show folder names" default="true"/>
+        <setting id="show_metadata" type="bool" label="Show metadata" default="true"/>
+        <setting id="show_duration" type="bool" label="Show duration" default="true" enable="eq(-1,true)"/>
     </category>
 
-    <category label="Download Settings">
-        <setting id="enable_download" type="bool" default="false" label="Enable Context Menu Download"/>
-        <setting id="download_path" type="folder" default="" label="Download Path" enable="eq(-1,true)"/>
-        <setting id="download_path_adult" type="folder" default="" label="Adult Download Path" enable="eq(-2,true)" help="If an adult content indicator is found in the filename, download to this path."/>
-        <setting id="download_filename_cleanup" type="bool" default="true" label="Clean Download Filenames" enable="eq(-3,true)"/>
-        <setting id="download_filename_delete_words" type="text" default="sample|trailer|bonus" label="Remove Words" enable="eq(-4,true)"/>
-        <setting id="download_filename_switch_words" type="text" default="" label="Switch Words (old=new|...)" enable="eq(-5,true)"/>
-        <setting id="download_filename_regex" type="bool" default="false" label="Use Regex Replace" enable="eq(-6,true)"/>
-        <setting id="download_filename_regex_pattern" type="text" default=".*" label="Regex Pattern" enable="eq(-7,true)"/>
-        <setting id="download_filename_regex_replace" type="text" default="" label="Replace With" enable="eq(-8,true)"/>
+    <category label="Advanced">
+        <setting id="enable_backups" type="bool" label="Enable backups" default="true"/>
+        <setting id="max_backups" type="number" label="Max backups to keep" default="3" enable="eq(-1,true)"/>
     </category>
 </settings>
