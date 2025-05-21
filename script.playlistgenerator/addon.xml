@@ -1,34 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.playlistgenerator"
        name="Playlist [COLOR gold]G[/COLOR]-enerator"
-       version="2.1.17"
-       provider-name="G-Thang-Code Master">
+       version="1.6.0"
+       provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
     </requires>
+
     <extension point="xbmc.python.script" library="default.py">
         <provides>executable</provides>
     </extension>
+
     <extension point="xbmc.addon.metadata">
-        <summary lang="en">Generates playlists for your 'Hard-to-scrape' video collections.</summary>
+        <summary lang="en">Lightweight Playlist Generator</summary>
         <description lang="en">
-            Lightweight utility to create and manage playlists for video content that isn't typically scraped by Kodi,
-            such as local collections, cloud sources (DAVs, SMB, FTP), and personal recordings.
+            Generates Video-Playlists.
+            Specialized for 'Hard-to-Scrspe' Video Collections.
         </description>
-        <disclaimer lang="en">This addon does not provide content.
-            It is a tool for organizing your existing video files into playlists.
-        </disclaimer>
-        <platform>all</platform>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
         </assets>
         <news>
-            v2.1.17: Fixed NameError related to 'Optional' type hint in utils.py.
-            v2.1.16: Ensured context menu download script (menu_download.py) is fully compatible with latest changes.
-            v2.1.15: Fixed core creation/scan failures, improved settings organization, enhanced navigation,
-            added new display options (file size, path level, numbering), implemented new playlist limits (per folder, per playlist, scan depth),
-            added adult download path setting. Removed 'Scan without playlist' feature.
+            v1.6.0: Building Up From Basic.
         </news>
     </extension>
 </addon>
