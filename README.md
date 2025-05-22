@@ -1,24 +1,28 @@
-# Tha-G👑-Thang
+# Tha-G-Thang
 # kodi
 
-# G👑-Gangsta
-addons with a
-# G👑-Edge 
- 
-**Tha-G👑-Thang**
+G-Gangsta kodi-addons 
+with a G-Edge
 
 in development;
-# Playlist G👑-enerstor
+# Playlist G-enerstor
 
 Corning from the frustration of
-'Hard to -Scrape' 
-personal collected content in kodi 
+the personal collected content, 
+that is 'Hard to -Scrape' in Kodi.
 
-Our journey begins with sorting-, tagging- and display- tools, like 
-# Playlist G👑-enerstor
-making the road clear for AI to take over.
+Our journey begins
+with tools for 
+sorting, 
+tagging and 
+displayimg.
+making the road clear 
+for AI to take over.
 
-### Ai Powered DJ
+Playlist G👑-enerstor 
+was born,
+
+# Ai Powered Vision 
 
 We envision a future where even the most chaotic collections 
 like:
