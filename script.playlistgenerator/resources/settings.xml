@@ -2,52 +2,57 @@
 <settings>
     <category label="Source &amp; Output Paths">
         <setting id="set_source_root_1" type="folder" label="Source Media Folder 1" default="/storage/emulated/0/Download/videos/" help="Select the first folder where your media files are located (e.g., cloud drive mount point). Leave blank if not used."/>
+        <setting id="set_exclude_folders_1" type="text" label="Exclude folders for Source 1 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 1. (e.g., Movies,Shows,Standup)"/>
+
         <setting id="set_source_root_2" type="folder" label="Source Media Folder 2" default="" help="Select the second folder for your media files. Leave blank if not used."/>
+        <setting id="set_exclude_folders_2" type="text" label="Exclude folders for Source 2 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 2."/>
+
         <setting id="set_source_root_3" type="folder" label="Source Media Folder 3" default="" help="Select the third folder for your media files. Leave blank if not used."/>
+        <setting id="set_exclude_folders_3" type="text" label="Exclude folders for Source 3 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 3."/>
+
         <setting id="set_source_root_4" type="folder" label="Source Media Folder 4" default="" help="Select the fourth folder for your media files. Leave blank if not used."/>
+        <setting id="set_exclude_folders_4" type="text" label="Exclude folders for Source 4 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 4."/>
+
         <setting id="set_source_root_5" type="folder" label="Source Media Folder 5" default="" help="Select the fifth folder for your media files. Leave blank if not used."/>
+        <setting id="set_exclude_folders_5" type="text" label="Exclude folders for Source 5 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 5."/>
+        
         <setting id="streams_target_root" type="folder" label="Output Folder for STRM Links" default="special://userdata/addon_data/script.playlistgenerator/streams/" help="Choose where the generated .strm files (media links/playlists) will be stored."/>
     </category>
 
     <category label="Media Filtering">
-        <setting id="file_extensions" type="text" label="Included File Extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of video file extensions to include (e.g., .mp4,.mkv)."/>
-        <setting id="recursive_scan" type="bool" label="Scan Subfolders Recursively" default="true" help="Enable to scan all subfolders within the Source Media Folder(s)."/>
-        <setting id="scan_depth_limit" type="number" label="Maximum Scan Depth (0 for unlimited)" default="0" help="Limit how many subfolder levels to scan. 0 means no limit."/>
-        <setting id="exclude_folders" type="text" label="Exclude Folders (comma-separated)" default=".git,__pycache__,tmp" help="Comma-separated list of folder names to exclude from scanning (e.g., sample,temp_files)."/>
-        <setting id="exclude_pattern" type="text" label="Exclude Filename Patterns" default="sample,trailer" help="Comma-separated list of words/patterns to exclude from filenames (e.g., sample,trailer)."/>
-        <setting id="min_file_size" type="number" label="Minimum File Size (MB)" default="5" option="int" unit="MB" help="Only include files larger than this size in Megabytes."/>
-        <setting id="enable_max_size" type="bool" label="Enable Maximum File Size" default="false" help="Activate a maximum file size limit."/>
-        <setting id="max_file_size" type="number" label="Maximum File Size (MB)" default="0" enable="eq(-1,true)" option="int" unit="MB" help="Only include files smaller than this size in Megabytes."/>
+        <setting id="file_extensions" type="text" label="Included File Extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of file extensions to include in scans (e.g., .mp4,.mkv)."/>
+        <setting id="recursive_scan" type="bool" label="Scan Subfolders (Recursive)" default="true" help="Enable to scan through all subfolders within the source media folders."/>
+        <setting id="scan_depth_limit" type="number" label="Recursive Scan Depth Limit" default="3" enable="eq(-1,true)" help="Set the maximum depth for recursive scanning (0 for unlimited)."/>
+        <setting id="min_file_size_mb" type="number" label="Minimum File Size (MB)" default="0" help="Only include files larger than this size in megabytes (0 for no limit)."/>
+        <setting id="exclude_hidden_files" type="bool" label="Exclude Hidden Files/Folders" default="true" help="Do not include files or folders that start with a '.' (dot)."/>
     </category>
 
-    <category label="Categorization &amp; Naming">
-        <setting id="auto_create_category_dirs" type="bool" label="Auto-create Category Folders" default="true" help="Automatically create subfolders for categories (e.g., Adult, Trailers) in the Output Folder."/>
-    </category>
-
-    <category label="Adult Content Filtering">
-        <setting id="enable_adult_content_filter" type="bool" label="Enable Adult Content Filter" default="false" help="If enabled, specific adult content filtering rules will be applied."/>
-        <setting id="adult_content_keywords" type="text" label="Adult Keywords (comma-separated)" default="adult,xrated,xxx" enable="eq(-1,true)" help="Keywords in filenames to identify adult content (e.g., adult,xxx)."/>
-        <setting id="adult_filename_remove_words" type="text" label="Adult Filename: Words to Remove" default="adult,xrated,xxx,hd,sd" enable="eq(-3,true)" help="Words to remove from adult filenames for display (e.g., adult,hd)."/>
-        <setting id="adult_filename_switch_words" type="text" label="Adult Filename: Words to Replace (old=new)" default="" enable="eq(-4,true)" help="Replace words in adult filenames (e.g., big=large, hot=spicy)."/>
-        <setting id="adult_regex_enable" type="bool" label="Adult Filename: Enable Regex Replace" default="false" enable="eq(-5,true)" help="Use a regular expression to modify adult filenames."/>
-        <setting id="adult_regex_pattern" type="text" label="Adult Regex Pattern" default="(.*)" enable="eq(-1,true)" help="Regular expression pattern to match in adult filenames."/>
-        <setting id="adult_regex_replace_with" type="text" label="Adult Regex Replace With" default="\1" enable="eq(-2,true)" help="Replacement string for the adult regex pattern."/>
-    </category>
-
-    <category label="Playlist &amp; Backup Management">
-        <setting id="max_playlist_backups" type="number" label="Max Playlist Backups to Keep" default="5" help="Number of old playlist backups to keep."/>
-        <setting id="auto_update_on_kodi_startup" type="bool" label="Auto-update Playlists on Kodi Startup" default="false" help="Automatically scan and update all playlists when Kodi starts."/>
-        <setting id="enable_cleanup_on_startup" type="bool" label="Cleanup Playlists on Startup" default="false" help="Remove links to missing files from all playlists during Kodi startup."/>
+    <category label="Categorization &amp; Playlists">
+        <setting id="enable_adult_content_filter" type="bool" label="Enable Adult Content Filter" default="false" help="When enabled, content matching adult keywords will be categorized separately."/>
+        <setting id="adult_content_keywords" type="text" label="Adult Content Keywords (comma separated)" default="adult,xxx,porn" enable="eq(-1,true)" help="Keywords in filenames to identify adult content for separate handling."/>
+        <setting id="adult_category_name" type="text" label="Adult Category Folder Name" default="[COLOR black]Adult[/COLOR]" enable="eq(-2,true)" help="The name of the folder where adult content STRM links will be stored. (e.g., Adult, Private)"/>
+        <setting id="default_category_behavior" type="list" label="Default Category Behavior" default="1" help="How to categorize files not matching specific rules.">
+            <lvalues>Categorize by Parent Folder Name|Place in 'Filename Only' Category|Place in '_' Category</lvalues>
+            <lvalues>0|1|2</lvalues>
+        </setting>
     </category>
 
     <category label="Download Settings">
-        <setting id="download_path" type="folder" label="Default Download Path (Regular Content)" default="special://home/downloads/" help="Choose the default folder where downloaded files will be saved for regular content."/>
-        <setting id="adult_download_path" type="folder" label="Adult Content Download Path" default="special://home/downloads/Adult/" help="Choose a specific folder for downloaded adult content. Falls back to Default Download Path if empty."/>
+        <setting id="download_path" type="folder" label="Default Download Path" default="special://temp/" help="Where files will be downloaded when 'Direct Download' is used."/>
+        <setting id="enable_direct_download" type="bool" label="Enable Direct Download" default="true" help="Adds a context menu option to directly download video files."/>
+        
         <setting id="download_remove_words" type="text" label="Downloaded Filename: Words to Remove" default="download,webrip" help="Words to remove from downloaded filenames for display."/>
         <setting id="download_switch_words" type="text" label="Downloaded Filename: Words to Replace (old=new)" default="" help="Replace words in downloaded filenames (e.g., 720p=HD)."/>
         <setting id="download_regex_enable" type="bool" label="Downloaded Filename: Enable Regex Replace" default="false" help="Use a regular expression to modify downloaded filenames."/>
         <setting id="download_regex_pattern" type="text" label="Downloaded Regex Pattern" default="(.*)" enable="eq(-1,true)" help="Regular expression pattern to match in downloaded filenames."/>
         <setting id="download_regex_replace_with" type="text" label="Downloaded Regex Replace With" default="\1" enable="eq(-2,true)" help="Replacement string for the downloaded regex pattern."/>
+
+        <setting id="adult_download_path" type="folder" label="Adult Content Download Path" default="special://temp/Adult/" enable="eq(-10,true)" help="Dedicated download path for adult content, if filter is enabled."/>
+        <setting id="adult_remove_words" type="text" default="" label="Adult Content Remove Words (pipe-separated)" enable="eq(-11,true)" help="Words (pipe-separated) to remove from adult content filenames."/>
+        <setting id="adult_switch_words" type="text" default="" label="Adult Content Switch Words (old=new|...)" enable="eq(-5,true)" help="Words to replace in adult content filenames."/>
+        <setting id="adult_regex_enable" type="bool" default="false" label="Use Adult Regex Replace" enable="eq(-6,true)" help="Enable regex for advanced adult content filename replacement."/>
+        <setting id="adult_regex_pattern" type="text" default=".*" label="Adult Regex Pattern" enable="eq(-7,true)" help="Regex pattern to search for in adult content filenames."/>
+        <setting id="adult_regex_replace_with" type="text" default="" label="Adult Regex Replace With" enable="eq(-8,true)" help="String to replace matched regex pattern with in adult content filenames."/>
     </category>
 
     <category label="Advanced Settings">
