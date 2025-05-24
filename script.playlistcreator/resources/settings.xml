@@ -1,1 +1,54 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="File Selection">
+        <setting id="file_extensions" type="text" label="File extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of video file extensions to include in playlists."/>
+        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,trailer" help="Comma-separated list of words/patterns to exclude from playlist filenames."/>
+        <setting id="exclude_folders" type="text" label="Exclude folders (comma separated)" default="" help="Comma-separated list of folder names to exclude from scanning."/>
+        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="50" help="Minimum file size (in MB) to include."/>
+        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false"/>
+        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="eq(-1,true)" help="Maximum file size (in MB) to include."/>
+        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true" help="Enable scanning of subfolders within the selected base folder."/>
+        <setting id="enable_date_filter" type="bool" default="false" label="Enable Date Filter"/>
+        <setting id="min_file_date" type="date" default="2000-01-01" label="Minimum File Date" enable="eq(-1,true)" help="Include files newer than this date."/>
+    </category>
 
+    <category label="Sorting">
+        <setting id="sort_mode" type="enum" label="File sort method" values="Newest First|A-Z|Z-A|Random|File Size (Smallest)|File Size (Largest)|Duration (Shortest)|Duration (Longest)" default="0" help="Method used to sort files within a playlist."/>
+        <setting id="folder_sort_mode" type="enum" label="Folder sorting" values="None|A-Z|Z-A|Custom Order" default="0" help="Method used to sort folders before processing."/>
+        <setting id="custom_folder_order" type="text" label="Custom folder order (comma separated)" default="" enable="eq(-1,3)" help="Comma-separated list of folder names for custom sorting."/>
+        <setting id="newest_files" type="number" label="Number of newest files to prioritize" default="0" help="Number of newest files to include from each folder, if applicable."/>
+        <setting id="limit_mode" type="enum" label="Limit mode" values="Per folder|Total files" default="0" help="Determines how the file limit is applied."/>
+        <setting id="file_count" type="number" label="Files per folder" default="20" enable="!eq(-1,1)" help="Maximum number of files to include per folder (if 'Per folder' limit mode)."/>
+        <setting id="total_file_count" type="number" label="Total files" default="100" enable="eq(-2,1)" help="Maximum total number of files to include in the playlist (if 'Total files' limit mode)."/>
+    </category>
+
+    <category label="Display">
+        <setting id="show_folder_names" type="bool" label="Show folder names" default="true" help="Display folder names in the playlist entries."/>
+        <setting id="show_metadata" type="bool" label="Show metadata" default="true" help="Display additional metadata (e.g., file size, duration) in playlist entries."/>
+        <setting id="show_duration" type="bool" label="Show duration" default="true" enable="eq(-1,true)" help="Display media duration in playlist entries."/>
+    </category>
+
+    <category label="Download Settings">
+        <setting id="enable_context_menu_download" type="bool" default="false" label="Enable Context Menu Download" help="Enables the 'Download' option in the context menu for playable items."/>
+        <setting id="download_path_label" type="heading" label="Regular Download Path" enable="eq(-1,true)"/>
+        <setting id="download_path" type="folder" default="" label="Download Path" enable="eq(-2,true)" help="Default path to save downloaded files."/>
+        
+        <setting id="download_cleanup_regular_toggle" type="bool" default="true" label="Enable Regular Filename Cleanup" enable="eq(-3,true)" help="Apply cleaning rules to regular filenames."/>
+        <setting id="download_cleanup_section_label" type="heading" label="Regular Filename Cleanup Rules" enable="eq(-1,true)"/>
+        <setting id="download_delete_words_regular" type="text" default="sample|trailer|bonus" label="Remove Words" enable="eq(-2,true)" help="Words (pipe-separated) to remove from filenames."/>
+        <setting id="download_switch_words_regular" type="text" default="" label="Switch Words (old=new|...)" enable="eq(-3,true)" help="Words to replace (e.g., 'old=new|another=different')."/>
+        <setting id="download_regex_enable_regular" type="bool" default="false" label="Use Regex Replace" enable="eq(-4,true)" help="Enable regex for advanced filename replacement."/>
+        <setting id="download_regex_pattern_regular" type="text" default=".*" label="Regex Pattern" enable="eq(-5,true)" help="Regex pattern to search for."/>
+        <setting id="download_regex_replace_with_regular" type="text" default="" label="Regex Replace With" enable="eq(-6,true)" help="String to replace matched regex pattern with."/>
+
+        <setting id="enable_adult_download_section" type="bool" default="false" label="Enable Adult Content Download Settings" enable="eq(-7,true)" help="Separate settings for adult content downloads."/>
+        <setting id="download_cleanup_adult_section_label" type="heading" label="Adult Content Download Settings" enable="eq(-1,true)"/>
+        <setting id="adult_download_path" type="folder" default="" label="Adult Download Path" enable="eq(-2,true)" help="Path to save adult content downloads. Overrides regular path."/>
+        <setting id="download_cleanup_adult_toggle" type="bool" default="true" label="Enable Adult Filename Cleanup" enable="eq(-3,true)" help="Apply cleaning rules to adult content filenames."/>
+        <setting id="download_delete_words_adult" type="text" default="adult|18+|xxx" label="Adult Content Remove Words" enable="eq(-4,true)" help="Words (pipe-separated) to remove from adult content filenames."/>
+        <setting id="download_switch_words_adult" type="text" default="" label="Adult Content Switch Words (old=new|...)" enable="eq(-5,true)" help="Words to replace in adult content filenames."/>
+        <setting id="download_regex_enable_adult" type="bool" default="false" label="Use Adult Regex Replace" enable="eq(-6,true)" help="Enable regex for advanced adult content filename replacement."/>
+        <setting id="download_regex_pattern_adult" type="text" default=".*" label="Adult Regex Pattern" enable="eq(-7,true)" help="Regex pattern to search for in adult content filenames."/>
+        <setting id="download_regex_replace_with_adult" type="text" default="" label="Adult Regex Replace With" enable="eq(-8,true)" help="String to replace matched regex pattern with in adult content filenames."/>
+    </category>
+</settings>
