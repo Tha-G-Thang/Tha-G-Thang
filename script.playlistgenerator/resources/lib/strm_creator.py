@@ -32,8 +32,22 @@ def create_playlist(file_list, playlist_name, is_single_file_mode=False):
             log(f"Created/updated playlist: {playlist_path}")
             return True
         else:
-            # Use existing create_strm_from_list function
-            return create_strm_from_list(file_list)
+            # This is for creating a playlist from a list of files, overwriting if it exists
+            playlist_path = xbmcvfs.translatePath(f'special://profile/playlists/video/{playlist_name}.m3u')
+            
+            # Ensure directory exists
+            playlist_dir = os.path.dirname(playlist_path)
+            if not xbmcvfs.exists(playlist_dir):
+                xbmcvfs.mkdirs(playlist_dir)
+            
+            # Write the new playlist
+            with open(playlist_path, 'w') as f:
+                f.write("#EXTM3U\n")
+                for file_url in file_list:
+                    f.write(f"{file_url}\n")
+            
+            log(f"Created/updated playlist with multiple files: {playlist_path}")
+            return True
             
     except Exception as e:
         log(f"Error creating playlist: {e}", xbmc.LOGERROR)
@@ -69,6 +83,9 @@ def categorize_file(media_file):
     elif any(keyword in filename for keyword in ['short']):
         return 'Shorts'
     elif any(keyword in filename for keyword in ['adult']):
-        return 'Adult'
+        for category_name in CATEGORY_NAMES:
+            if 'adult' in category_name.lower(): # Find the "Adult" entry, ignoring case and color tags for the search
+                return category_name
+        return 'Adult' # Fallback, though it should find it in CATEGORY_NAMES
     else:
         return 'Filename Only'

@@ -5,7 +5,7 @@ import xbmcvfs
 import sys
 import os 
 
-from .strm_utils import log, ADDON_ID, clean_display_name, load_sets, save_json, CONFIG_FILE   
+from .strm_utils import log, ADDON_ID, clean_display_name, load_sets, save_sets, CONFIG_FILE
 from .strm_creator import create_playlist # Importeer create_playlist
 
 def add_to_playlist_from_context(file_url):
@@ -41,6 +41,17 @@ def add_to_playlist_from_context(file_url):
         # Nu roepen we create_playlist aan met is_single_file_mode=True
         if create_playlist([file_url], new_playlist_name, is_single_file_mode=True): # Aangepast
             dialog.notification("Playlist Generator", f"File added to new playlist '{new_playlist_name}'.", xbmcgui.NOTIFICATION_INFO)
+            # Update config.json with the new set
+            sets[new_playlist_name] = {
+                "path": f"special://profile/playlists/video/{new_playlist_name}.m3u",
+                "settings": {},
+                "type": "m3u_playlist"
+            }
+            if save_sets(sets):
+                log(f"Successfully updated config.json with new set: {new_playlist_name}")
+            else:
+                log(f"Failed to update config.json with new set: {new_playlist_name}", level=xbmc.LOGERROR)
+                dialog.notification("Playlist Generator", "Failed to save new playlist to config.", xbmcgui.NOTIFICATION_ERROR)
         else:
             dialog.notification("Playlist Generator", f"Failed to add file to new playlist '{new_playlist_name}'.", xbmcgui.NOTIFICATION_ERROR)
         

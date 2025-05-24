@@ -2,6 +2,8 @@ import os
 import xbmc
 import xbmcaddon
 import xbmcvfs # Zorg ervoor dat deze import aanwezig is
+import json
+from .constants import CONFIG_FILE
 
 addon = xbmcaddon.Addon()
 log_prefix = "[STRM Addon]"
@@ -47,3 +49,49 @@ def clean_display_name(name):
     if '.' in cleaned_name:
         cleaned_name = os.path.splitext(cleaned_name)[0]
     return cleaned_name
+
+def load_sets():
+    config_path = os.path.join(ADDON_PROFILE, CONFIG_FILE)
+    log(f"Checking for config file at: {config_path}")
+    if xbmcvfs.exists(config_path):
+        try:
+            f = xbmcvfs.File(config_path, 'r')
+            content = f.read()
+            f.close()
+            if content:
+                try:
+                    sets_data = json.loads(content)
+                    log("Sets loaded successfully.")
+                    return sets_data
+                except (json.JSONDecodeError, TypeError) as e:
+                    log(f"Error decoding JSON from {config_path}: {e}")
+                    return {}
+            else:
+                log(f"Config file {config_path} is empty.")
+                return {}
+        except Exception as e:
+            log(f"Error reading config file {config_path}: {e}")
+            return {}
+    else:
+        log(f"Config file not found: {config_path}")
+        return {}
+
+def save_sets(sets_data):
+    config_path = os.path.join(ADDON_PROFILE, CONFIG_FILE)
+    log(f"Saving sets to: {config_path}")
+    try:
+        if not xbmcvfs.exists(ADDON_PROFILE):
+            # Create the directory if it doesn't exist
+            if not xbmcvfs.mkdirs(ADDON_PROFILE):
+                log(f"Error creating directory: {ADDON_PROFILE}")
+                return False
+        
+        f = xbmcvfs.File(config_path, 'w')
+        json_data = json.dumps(sets_data, indent=4)
+        f.write(json_data)
+        f.close()
+        log("Sets saved successfully.")
+        return True
+    except Exception as e:
+        log(f"Error saving sets to {config_path}: {e}")
+        return False

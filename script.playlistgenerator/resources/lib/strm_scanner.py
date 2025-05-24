@@ -49,7 +49,7 @@ def get_media_files():
 
             for fname in filenames:
                 full_path = os.path.join(dirpath, fname)
-                if is_valid_file(full_path): # is_valid_file controleert nu ook op grootte
+                if is_valid_file(full_path): # is_valid_file controleert bestandsextensies
                     media_files.append(full_path)
 
     if media_files:
