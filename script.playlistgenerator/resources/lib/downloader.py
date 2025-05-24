@@ -33,66 +33,64 @@ def download_file_with_progress(file_url):
         response.raise_for_status()
 
         total_size = int(response.headers.get('content-length', 0))
-        original_filename = os.path.basename(file_url).split('?')[0]
-        
-        cleaned_filename = _clean_download_filename(original_filename, is_adult_content)
-        file_path = os.path.join(download_dir, cleaned_filename)
-
-        # Ensure unique filename to prevent overwriting
-        counter = 1
-        base_name, ext = os.path.splitext(cleaned_filename)
-        while xbmcvfs.exists(file_path):
-            file_path = os.path.join(download_dir, f"{base_name}_{counter}{ext}")
-            counter += 1
-
-        dialog = xbmcgui.DialogProgressBG()
-        dialog.create("Downloading", f"Downloading: {os.path.basename(file_path)}")
-
+        chunk_size = 8192  # 8KB chunks
         downloaded_size = 0
-        chunk_size = 8192 # 8KB chunks
+        
+        # Clean the filename before saving
+        cleaned_filename = clean_display_name(os.path.basename(file_url).split('?')[0], is_adult_content)
+        file_path = xbmcvfs.makeLegalFilename(os.path.join(download_dir, cleaned_filename))
+
+        dialog = xbmcgui.DialogProgress()
+        dialog.create("Downloading File", "Preparing to download...")
+
         with xbmcvfs.File(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
-                if dialog.isFinished():
+                if dialog.iscanceled():
                     log(f"Download cancelled by user: {file_url}", xbmc.LOGINFO)
-                    response.close()
-                    xbmcvfs.delete(file_path) # Clean up partial file
                     dialog.close()
-                    return
-
+                    xbmcvfs.delete(file_path)  # Clean up partial download
+                    xbmcgui.Dialog().notification("Download Cancelled", f"Download of '{cleaned_filename}' cancelled.", xbmcgui.NOTIFICATION_WARNING)
+                    return False
                 f.write(chunk)
                 downloaded_size += len(chunk)
-                
                 if total_size > 0:
-                    percentage = int((downloaded_size / total_size) * 100)
-                    dialog.update(percentage, f"Downloading: {os.path.basename(file_path)}", f"{round(downloaded_size / (1024 * 1024), 2)} MB / {round(total_size / (1024 * 1024), 2)} MB")
+                    percent = int(downloaded_size * 100 / total_size)
+                    dialog.update(percent, f"Downloading: {cleaned_filename}", f"{downloaded_size / (1024 * 1024):.2f} MB / {total_size / (1024 * 1024):.2f} MB")
                 else:
-                    dialog.update(0, f"Downloading: {os.path.basename(file_path)}", f"{round(downloaded_size / (1024 * 1024), 2)} MB")
+                    dialog.update(0, f"Downloading: {cleaned_filename}", f"{downloaded_size / (1024 * 1024):.2f} MB (size unknown)")
 
         dialog.close()
+        xbmcgui.Dialog().notification("Download Complete", f"'{cleaned_filename}' downloaded.", xbmcgui.NOTIFICATION_INFO)
         log(f"Successfully downloaded: {file_path}", xbmc.LOGINFO)
-        xbmcgui.Dialog().notification("Download Complete", f"Downloaded: {os.path.basename(file_path)}", xbmcgui.NOTIFICATION_INFO)
+        return True
 
     except requests.exceptions.RequestException as e:
-        log(f"Download request failed for {file_url}: {e}", xbmc.LOGERROR)
-        xbmcgui.Dialog().notification("Download Error", "Could not download file.", xbmcgui.NOTIFICATION_ERROR)
+        log(f"Error downloading file {file_url}: {e}", xbmc.LOGERROR)
+        dialog.close()
+        xbmcgui.Dialog().notification("Download Failed", f"Failed to download '{cleaned_filename}'.", xbmcgui.NOTIFICATION_ERROR)
+        return False
     except Exception as e:
-        log(f"An unexpected error occurred during download of {file_url}: {e}", xbmc.LOGERROR)
-        xbmcgui.Dialog().notification("Download Error", "An unexpected error occurred.", xbmcgui.NOTIFICATION_ERROR)
-    finally:
-        if 'dialog' in locals() and not dialog.isFinished(): # Ensure dialog is closed in case of error
-            dialog.close()
+        log(f"An unexpected error occurred during download: {e}", xbmc.LOGERROR)
+        dialog.close()
+        xbmcgui.Dialog().notification("Download Failed", f"An error occurred with '{cleaned_filename}'.", xbmcgui.NOTIFICATION_ERROR)
+        return False
 
-def _clean_download_filename(filename, is_adult_content):
-    cleaned_name = os.path.basename(filename).split('?')[0] # Remove URL parameters
+# This function remains in downloader.py as it's directly related to cleaning names for downloads.
+def clean_downloaded_filename(original_name, is_adult=False):
+    """
+    Cleans up the filename of a downloaded file based on settings.
+    Applies separate cleanup rules for adult content if enabled.
+    """
+    cleaned_name = original_name
 
-    if is_adult_content:
-        if get_setting('adult_filename_remove_words', '') != '':
-            remove_words = [w.strip() for w in get_setting('adult_filename_remove_words', '').split(',') if w.strip()]
+    if is_adult:
+        if get_setting('adult_remove_words', '') != '':
+            remove_words = [w.strip() for w in get_setting('adult_remove_words', '').split('|') if w.strip()]
             for word in remove_words:
-                cleaned_name = re.sub(r'\b' + re.escape(word) + r'\b', '', cleaned_name, flags=re.IGNORECASE).strip()
+                cleaned_name = re.sub(r'\\b' + re.escape(word) + r'\\b', '', cleaned_name, flags=re.IGNORECASE).strip()
 
-        if get_setting('adult_filename_switch_words', '') != '':
-            switch_pairs = [p.strip().split('=') for p in get_setting('adult_filename_switch_words', '').split(',') if p.strip() and '=' in p]
+        if get_setting('adult_switch_words', '') != '':
+            switch_pairs = [p.strip().split('=') for p in get_setting('adult_switch_words', '').split('|') if p.strip() and '=' in p]
             for old, new in switch_pairs:
                 cleaned_name = re.sub(re.escape(old), new, cleaned_name, flags=re.IGNORECASE)
         
@@ -109,7 +107,7 @@ def _clean_download_filename(filename, is_adult_content):
         if get_setting('download_remove_words', '') != '':
             remove_words = [w.strip() for w in get_setting('download_remove_words', '').split(',') if w.strip()]
             for word in remove_words:
-                cleaned_name = re.sub(r'\b' + re.escape(word) + r'\b', '', cleaned_name, flags=re.IGNORECASE).strip()
+                cleaned_name = re.sub(r'\\b' + re.escape(word) + r'\\b', '', cleaned_name, flags=re.IGNORECASE).strip()
 
         if get_setting('download_switch_words', '') != '':
             switch_pairs = [p.strip().split('=') for p in get_setting('download_switch_words', '').split(',') if p.strip() and '=' in p]
@@ -122,6 +120,6 @@ def _clean_download_filename(filename, is_adult_content):
             try:
                 cleaned_name = re.sub(pattern, replace_with, cleaned_name, flags=re.IGNORECASE)
             except re.error as e:
-                log(f"Invalid regex pattern: {pattern} - {e}", xbmc.LOGERROR)
-
+                log(f"Invalid download regex pattern: {pattern} - {e}", xbmc.LOGERROR)
+                
     return cleaned_name
