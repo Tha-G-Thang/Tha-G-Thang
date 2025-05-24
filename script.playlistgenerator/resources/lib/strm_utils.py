@@ -3,13 +3,12 @@ import xbmc
 import xbmcaddon
 import xbmcvfs
 import json
-from .constants import ADDON_ID, CONFIG_FILE # <-- DEZE IMPORTS ZIJN TOEGEVOEGD
+from .constants import ADDON_ID, CONFIG_FILE
 
-addon = xbmcaddon.Addon(ADDON_ID) # Gebruik ADDON_ID hier voor initialisatie
-log_prefix = f"[{ADDON_ID}]" # Gebruik ADDON_ID voor log prefix
+addon = xbmcaddon.Addon(ADDON_ID)
+log_prefix = f"[{ADDON_ID}]"
 
-# Aangepast: Gebruik xbmcvfs.translatePath in plaats van xbmc.translatePath
-ADDON_PROFILE = xbmcvfs.translatePath(addon.getAddonInfo('profile')) 
+ADDON_PROFILE = xbmcvfs.translatePath(addon.getAddonInfo('profile'))
 
 def log(message, level=xbmc.LOGNOTICE):
     xbmc.log(f"{log_prefix} {message}", level)
@@ -17,94 +16,89 @@ def log(message, level=xbmc.LOGNOTICE):
 def get_setting(id, default=None):
     return addon.getSetting(id) or default
 
-def parse_exclude_folders():
-    # Deze functie wordt niet meer direct gebruikt door strm_scanner.py voor de hoofdscan
-    # maar kan blijven bestaan voor compatibiliteit of andere doeleinden.
-    raw = get_setting('exclude_folders', '')
-    return [x.strip() for x in raw.split(',') if x.strip()]
+def translate_path(path):
+    """Translates a special path (like special://) to a system path."""
+    return xbmcvfs.translatePath(path)
 
 def is_valid_file(filename):
     ext = os.path.splitext(filename)[1].lower()
     allowed_extensions_str = get_setting('file_extensions', '.mp4,.mkv,.avi,.mov,.wmv')
     allowed_extensions = [e.strip() for e in allowed_extensions_str.split(',') if e.strip()]
     
-    # Controleer ook minimum bestandsgrootte
-    min_size_mb = float(get_setting('min_file_size_mb', '0'))
+    if ext not in allowed_extensions:
+        return False
+
+    # Check minimum file size
+    min_size_mb = float(get_setting('min_file_size', '50'))
     if min_size_mb > 0:
-        file_size_bytes = xbmcvfs.FStat(filename).size()
-        if file_size_bytes < (min_size_mb * 1024 * 1024):
-            log(f"Excluding {filename} due to size ({file_size_bytes / (1024 * 1024):.2f} MB < {min_size_mb} MB)", xbmc.LOGINFO)
+        file_size_bytes = xbmcvfs.size(filename)
+        if file_size_bytes == -1: # -1 indicates file not found or inaccessible by xbmcvfs.size
+            log(f"Warning: Could not get size for file: {filename}. Skipping size check.", xbmc.LOGWARNING)
+            # Decide if you want to include or exclude if size cannot be determined.
+            # For now, let's assume it's invalid if size can't be checked for min_size > 0
+            return False 
+        if file_size_bytes < min_size_mb * 1024 * 1024:
+            log(f"Excluding {filename} (size {file_size_bytes / (1024 * 1024):.2f} MB below min {min_size_mb} MB)", xbmc.LOGINFO)
             return False
 
-    return ext in allowed_extensions
+    # Check maximum file size (if enabled)
+    if get_setting('enable_max_size', 'false') == 'true':
+        max_size_mb = float(get_setting('max_file_size', '0'))
+        if max_size_mb > 0:
+            file_size_bytes = xbmcvfs.size(filename)
+            if file_size_bytes == -1: # Same check as above
+                log(f"Warning: Could not get size for file: {filename}. Skipping max size check.", xbmc.LOGWARNING)
+                return False
+            if file_size_bytes > max_size_mb * 1024 * 1024:
+                log(f"Excluding {filename} (size {file_size_bytes / (1024 * 1024):.2f} MB above max {max_size_mb} MB)", xbmc.LOGINFO)
+                return False
 
-def translate_path(path):
-    # Aangepast: Gebruik xbmcvfs.translatePath in plaats van xbmc.translatePath
-    return xbmcvfs.translatePath(path)
+    # Check exclude pattern in filename (e.g., "sample", "trailer")
+    exclude_pattern_str = get_setting('exclude_pattern', 'sample,trailer')
+    exclude_patterns = [p.strip().lower() for p in exclude_pattern_str.split(',') if p.strip()]
+    
+    file_name_lower = os.path.basename(filename).lower()
+    if any(pattern in file_name_lower for pattern in exclude_patterns):
+        log(f"Excluding {filename} (matches exclude pattern)", xbmc.LOGINFO)
+        return False
 
-def parse_url(url):
-    params = {}
-    if url:
-        if url.startswith("plugin://"):
-            url = url[len("plugin://"):]
-        
-        parts = url.split('/')
-        for part in parts:
-            if '=' in part:
-                key, value = part.split('=', 1)
-                params[key] = value
-    return params
+    # Check date filter (if enabled)
+    if get_setting('enable_date_filter', 'false') == 'true':
+        try:
+            file_stat = xbmcvfs.stat(filename)
+            file_mtime = file_stat['st_mtime'] # Modification time
+            
+            min_date_str = get_setting('min_file_date', '2000-01-01')
+            max_date_str = get_setting('max_file_date', '2100-01-01')
 
-def clean_display_name(filename, is_adult=False):
+            from datetime import datetime
+            min_timestamp = datetime.strptime(min_date_str, '%Y-%m-%d').timestamp()
+            max_timestamp = datetime.strptime(max_date_str, '%Y-%m-%d').timestamp()
+
+            if not (min_timestamp <= file_mtime <= max_timestamp):
+                log(f"Excluding {filename} (modification date outside range)", xbmc.LOGINFO)
+                return False
+        except Exception as e:
+            log(f"Error checking file date for {filename}: {e}", xbmc.LOGWARNING)
+            # If date check fails, decide whether to include or exclude. Default to exclude for safety.
+            return False
+
+    return True
+
+def clean_display_name(filename_or_url):
     """
-    Cleans up a filename for display purposes, removing unwanted words and applying regex.
-    Applies separate cleanup rules for adult content if enabled.
+    Extracts the base filename without extension from a path or URL.
+    This function currently does NOT apply any cleaning rules (like removing words or regex).
+    Full cleaning logic will be handled later, potentially for metadata display.
     """
-    cleaned_name = os.path.splitext(os.path.basename(filename))[0]
-
-    if is_adult:
-        # Use adult-specific cleanup settings
-        if get_setting('adult_remove_words', '') != '':
-            remove_words = [w.strip() for w in get_setting('adult_remove_words', '').split('|') if w.strip()]
-            for word in remove_words:
-                cleaned_name = re.sub(r'\b' + re.escape(word) + r'\b', '', cleaned_name, flags=re.IGNORECASE).strip()
-
-        if get_setting('adult_switch_words', '') != '':
-            switch_pairs = [p.strip().split('=') for p in get_setting('adult_switch_words', '').split('|') if p.strip() and '=' in p]
-            for old, new in switch_pairs:
-                cleaned_name = re.sub(re.escape(old), new, cleaned_name, flags=re.IGNORECASE)
-        
-        if get_setting('adult_regex_enable', 'false') == 'true':
-            pattern = get_setting('adult_regex_pattern', '(.*)')
-            replace_with = get_setting('adult_regex_replace_with', '\\1')
-            try:
-                cleaned_name = re.sub(pattern, replace_with, cleaned_name, flags=re.IGNORECASE)
-            except re.error as e:
-                log(f"Invalid adult regex pattern in settings: {pattern} - {e}", xbmc.LOGERROR)
-
-    else:
-        # Use general cleanup settings
-        if get_setting('download_remove_words', '') != '':
-            remove_words = [w.strip() for w in get_setting('download_remove_words', '').split(',') if w.strip()]
-            for word in remove_words:
-                cleaned_name = re.sub(r'\b' + re.escape(word) + r'\b', '', cleaned_name, flags=re.IGNORECASE).strip()
-
-        if get_setting('download_switch_words', '') != '':
-            switch_pairs = [p.strip().split('=') for p in get_setting('download_switch_words', '').split(',') if p.strip() and '=' in p]
-            for old, new in switch_pairs:
-                cleaned_name = re.sub(re.escape(old), new, cleaned_name, flags=re.IGNORECASE)
-        
-        if get_setting('download_regex_enable', 'false') == 'true':
-            pattern = get_setting('download_regex_pattern', '(.*)')
-            replace_with = get_setting('download_regex_replace_with', '\\1')
-            try:
-                cleaned_name = re.sub(pattern, replace_with, cleaned_name, flags=re.IGNORECASE)
-            except re.error as e:
-                log(f"Invalid download regex pattern in settings: {pattern} - {e}", xbmc.LOGERROR)
-
-    # Remove any leading/trailing hyphens or spaces left from cleanup
-    cleaned_name = cleaned_name.strip(' -')
-    return cleaned_name
+    # Handles both local paths and URLs
+    if "://" in filename_or_url: # Likely a URL
+        base_name = filename_or_url.split('/')[-1].split('?')[0] # Get last part, remove query params
+    else: # Likely a local path
+        base_name = os.path.basename(filename_or_url)
+    
+    name_without_extension = os.path.splitext(base_name)[0]
+    return name_without_extension.strip()
 
 def load_sets():
     config_path = os.path.join(ADDON_PROFILE, CONFIG_FILE)
@@ -137,7 +131,6 @@ def save_sets(sets_data):
     log(f"Saving sets to: {config_path}")
     try:
         if not xbmcvfs.exists(ADDON_PROFILE):
-            # Create the directory if it doesn't exist
             if not xbmcvfs.mkdirs(ADDON_PROFILE):
                 log(f"Error creating directory: {ADDON_PROFILE}")
                 return False
@@ -149,5 +142,5 @@ def save_sets(sets_data):
         log("Sets saved successfully.")
         return True
     except Exception as e:
-        log(f"Error saving config file {config_path}: {e}", xbmc.LOGERROR)
+        log(f"Error saving sets to {config_path}: {e}", xbmc.LOGERROR)
         return False

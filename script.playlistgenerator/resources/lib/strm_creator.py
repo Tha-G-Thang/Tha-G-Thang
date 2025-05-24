@@ -1,10 +1,10 @@
 import os
 import xbmc
 import xbmcvfs
-import json # Zorg dat deze import aanwezig is
+import json
 
-from .strm_utils import log, translate_path, is_valid_file, get_setting # get_setting toegevoegd
-from .strm_structure import ensure_category_structure
+from .strm_utils import log, translate_path, get_setting
+from .strm_structure import ensure_category_structure # Keep this for category management
 from .constants import CATEGORY_NAMES
 
 def create_playlist(file_list, playlist_name, is_single_file_mode=False):
@@ -24,83 +24,106 @@ def create_playlist(file_list, playlist_name, is_single_file_mode=False):
         mode = 'a' if is_single_file_mode and xbmcvfs.exists(playlist_path) else 'w'
         
         with xbmcvfs.File(playlist_path, mode) as f:
-            # Voeg #EXTM3U toe als het een nieuw bestand is of als we overschrijven
-            if mode == 'w' or not xbmcvfs.exists(playlist_path): # Check again for new file if mode was 'a' but file didn't exist
-                f.write("#EXTM3U\\n")
+            # Add #EXTM3U if it's a new file or if we're overwriting
+            if mode == 'w' or not xbmcvfs.exists(playlist_path):
+                f.write("#EXTM3U\n")
             
-            for file_url in file_list:
-                f.write(f"{file_url}\\n")
+            for file_path in file_list:
+                # For playlists, we simply write the path to the STRM file.
+                # The display name will be handled by Kodi's scraper if an NFO is present,
+                # or will default to the STRM filename.
+                f.write(f"{file_path}\n")
         
-        log(f"Created/updated playlist: {playlist_path}")
+        log(f"Playlist '{playlist_name}' created/updated successfully at {playlist_path}", xbmc.LOGINFO)
         return True
     except Exception as e:
-        log(f"Failed to create or update playlist {playlist_name}: {e}", xbmc.LOGERROR)
+        log(f"Failed to create/update playlist '{playlist_name}': {e}", xbmc.LOGERROR)
         return False
 
-def create_strm_from_list(media_files):
-    """Genereert .strm bestanden voor de gegeven lijst van mediabestanden."""
-    ensure_category_structure()  # Zorgt ervoor dat de mappenstructuur bestaat
-    for media_file in media_files:
-        category = categorize_file(media_file)
-        if category:
-            strm_file = os.path.join(translate_path(get_setting('streams_target_root')), category, os.path.basename(media_file) + '.strm')
-            if not xbmcvfs.exists(strm_file):
-                try:
-                    with xbmcvfs.File(strm_file, 'w') as f:
-                        f.write(media_file)
-                    log(f"Created STRM file for {media_file} in category {category}")
-                except Exception as e:
-                    log(f"Failed to create STRM file for {media_file}: {e}", xbmc.LOGERROR)
-            else:
-                log(f"STRM file for {media_file} already exists.", xbmc.LOGINFO)
+def get_category_for_file(filename):
+    """
+    Determines the category folder based on addon settings or file path.
+    """
+    use_parent_folder_as_category = get_setting('use_parent_folder_as_category', 'false') == 'true'
 
-def categorize_file(media_file):
-    """Bepaal de categorie voor een bestand op basis van naam of extensie."""
-    filename = os.path.basename(media_file).lower()
-
-    # Speciale categorieën op basis van trefwoorden in de bestandsnaam
-    if any(keyword in filename for keyword in ['youtube.com', 'youtu.be']):
-        return 'Youtube Clips'
-    elif any(keyword in filename for keyword in ['trailer', 'teaser']):
-        return 'Trailers'
-    elif any(keyword in filename for keyword in ['compilation', 'best of']):
-        return 'Compilations'
-    elif any(keyword in filename for keyword in ['music video', 'song']):
-        return 'Music Videos'
-    elif any(keyword in filename for keyword in ['short']):
-        return 'Shorts'
-    elif any(keyword in filename for keyword in ['adult']):
-        for category_name in CATEGORY_NAMES:
-            if 'adult' in category_name.lower(): # Find the "Adult" entry, ignoring case and color tags for the search
-                return category_name
-        return 'Adult' # Fallback, though it should find it in CATEGORY_NAMES
-    
-    # Gedrag voor niet-gematchte bestanden
-    default_behavior = get_setting('default_category_behavior', '1') # 0: parent folder, 1: Filename Only, 2: _
-
-    if default_behavior == '0': # Categorize by Parent Folder Name
-        parent_folder = os.path.basename(os.path.dirname(media_file))
+    if use_parent_folder_as_category:
+        parent_folder = os.path.basename(os.path.dirname(filename))
         if parent_folder:
-            # Controleer of de parent_folder overeenkomt met een van de CATEGORY_NAMES
-            # Dit moet robuuster zijn, aangezien CATEGORY_NAMES kleurcodes kan bevatten
+            # Check if the parent_folder matches any of the CATEGORY_NAMES
             for cat_name in CATEGORY_NAMES:
-                # Vergelijk lowercase en zonder kleurcodes
-                # xbmc.getCleanMovieTitle is een optie, maar niet altijd perfect
-                cleaned_cat_name = xbmc.getCleanMovieTitle(cat_name).lower() if hasattr(xbmc, 'getCleanMovieTitle') else cat_name.lower().replace('[color black]', '').replace('[color gold]', '')
-                if parent_folder.lower() == cleaned_cat_name:
+                # Compare lowercase and without color codes for a robust match
+                # xbmc.getCleanMovieTitle is not suitable here for exact string comparison
+                # We'll just compare cleaned up versions
+                clean_cat_name = cat_name.lower().replace('[color black]', '').replace('[color gold]', '')
+                if parent_folder.lower() == clean_cat_name:
                     return cat_name
-            # Als het niet matcht met een vaste categorie, return dan de mapnaam zelf
+            # If it doesn't match a fixed category, return the folder name itself
             return parent_folder
         else:
-            return 'Filename Only' # Of een andere fallback als geen parent map
-    elif any(keyword in filename for keyword in ['adult']):
-        for category_name in CATEGORY_NAMES:
-            if 'adult' in category_name.lower(): # Find the "Adult" entry, ignoring case and color tags for the search
-                return category_name
-        return 'Adult' # Fallback, though it should find it in CATEGORY_NAMES
+            # Fallback if no parent folder (e.g., file directly in root of source)
+            # Or if "Filename Only" is configured as a fallback
+            if 'Filename Only' in CATEGORY_NAMES:
+                return 'Filename Only'
+            else:
+                return '_' # Generic fallback
     else:
-        # Check if "Filename Only" is a valid category or if a default exists
-        if 'Filename Only' in CATEGORY_NAMES: # Ensure 'Filename Only' is a defined category
+        # Default behavior if not using parent folder as category
+        if 'Filename Only' in CATEGORY_NAMES:
             return 'Filename Only'
         else:
             return '_' # Fallback to a generic folder if 'Filename Only' is not used
+
+def create_strm_from_list(media_files):
+    """
+    Creates STRM files for each media file in the list.
+    The STRM files are now named using the original base filename.
+    """
+    if not media_files:
+        log("No media files provided to create STRM links.", xbmc.LOGINFO)
+        return False
+
+    strm_output_root = translate_path(get_setting('streams_target_root'))
+    strm_file_extension = get_setting('strm_file_extension', '.strm')
+
+    if not xbmcvfs.exists(strm_output_root):
+        if not xbmcvfs.mkdirs(strm_output_root):
+            log(f"Failed to create output folder: {strm_output_root}", xbmc.LOGERROR)
+            return False
+
+    # Ensure category structure exists if `use_parent_folder_as_category` is enabled
+    # We call this here to ensure all potential category folders are ready.
+    ensure_category_structure()
+
+    successful_creations = 0
+    for media_file in media_files:
+        try:
+            # Get the category path for the STRM file
+            category_name = get_category_for_file(media_file)
+            strm_target_dir = os.path.join(strm_output_root, category_name)
+            
+            if not xbmcvfs.exists(strm_target_dir):
+                if not xbmcvfs.mkdirs(strm_target_dir):
+                    log(f"Failed to create category folder: {strm_target_dir}", xbmc.LOGERROR)
+                    continue # Skip this file if folder creation fails
+
+            # Use original base filename for the .strm file
+            strm_base_name = os.path.splitext(os.path.basename(media_file))[0]
+            strm_file_path = os.path.join(strm_target_dir, f"{strm_base_name}{strm_file_extension}")
+
+            # Write the original media file path (URL) into the .strm file
+            with xbmcvfs.File(strm_file_path, 'w') as f:
+                f.write(media_file) # Write the actual URL/path to the media file
+
+            log(f"Created STRM: {strm_file_path} -> {media_file}", xbmc.LOGINFO)
+            successful_creations += 1
+
+        except Exception as e:
+            log(f"Error creating STRM for {media_file}: {e}", xbmc.LOGERROR)
+            continue
+
+    if successful_creations > 0:
+        log(f"Successfully created {successful_creations} STRM links.", xbmc.LOGINFO)
+        return True
+    else:
+        log("No STRM links were successfully created.", xbmc.LOGWARNING)
+        return False
