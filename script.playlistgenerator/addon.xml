@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.playlistgenerator"
-       name="Playlist [COLOR gold]G[/COLOR]-enerator Plus"
-       version="1.0.2"
+       name="Playlist [COLOR gold]G[/COLOR]-enerator"
+       version="1.1.1"
        provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.requests" version="2.0.0"/>
     </requires>
 
     <extension point="xbmc.python.script" library="default.py">
@@ -16,15 +15,14 @@
         <summary lang="en">Lightweight Playlist Generator</summary>
         <description lang="en">
             Generates Video-Playlists.
-            Specialized for 'Hard-to-Scrape' Video Collections.
+            Specialized for 'Hard-to-Scrspe' Video Collections.
         </description>
         <assets>
             <icon>resources/icon.png</icon>
             <fanart>resources/fanart.jpg</fanart>
         </assets>
         <news>
-            v1.0.1: Verbeterde module-afhankelijkheden, geoptimaliseerde instellingen en UI.
-            v1.0.0: Grand Refactor. New Base to Build from.
+            v1.1.1: Adjusted py files. Building Up From Basic.
         </news>
     </extension>
 </addon>
