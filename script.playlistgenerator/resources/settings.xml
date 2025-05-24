@@ -15,44 +15,27 @@
 
         <setting id="set_source_root_5" type="folder" label="Source Media Folder 5" default="" help="Select the fifth folder for your media files. Leave blank if not used."/>
         <setting id="set_exclude_folders_5" type="text" label="Exclude folders for Source 5 (comma separated)" default="" enable="!eq(-1, '')" help="Comma-separated list of folder names to exclude from scanning for Source 5."/>
-        
+
         <setting id="streams_target_root" type="folder" label="Output Folder for STRM Links" default="special://userdata/addon_data/script.playlistgenerator/streams/" help="Choose where the generated .strm files (media links/playlists) will be stored."/>
     </category>
 
     <category label="Media Filtering">
-        <setting id="file_extensions" type="text" label="Included File Extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of file extensions to include in scans (e.g., .mp4,.mkv)."/>
-        <setting id="recursive_scan" type="bool" label="Scan Subfolders (Recursive)" default="true" help="Enable to scan through all subfolders within the source media folders."/>
-        <setting id="scan_depth_limit" type="number" label="Recursive Scan Depth Limit" default="3" enable="eq(-1,true)" help="Set the maximum depth for recursive scanning (0 for unlimited)."/>
-        <setting id="min_file_size_mb" type="number" label="Minimum File Size (MB)" default="0" help="Only include files larger than this size in megabytes (0 for no limit)."/>
-        <setting id="exclude_hidden_files" type="bool" label="Exclude Hidden Files/Folders" default="true" help="Do not include files or folders that start with a '.' (dot)."/>
+        <setting id="file_extensions" type="text" label="Included File Extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of video file extensions to include in playlists."/>
+        <setting id="exclude_pattern" type="text" label="Exclude words in filename" default="sample,trailer" help="Comma-separated list of words/patterns to exclude from playlist filenames."/>
+        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="50" help="Minimum file size (in MB) to include."/>
+        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false"/>
+        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="eq(-1,true)" help="Maximum file size (in MB) to include."/>
+        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true" help="Enable scanning of subfolders within the selected base folder."/>
+        <setting id="scan_depth_limit" type="number" label="Scan Depth Limit" default="3" enable="eq(-1,true)" help="Maximum depth for subfolder scanning (0 for unlimited)."/>
+        <setting id="enable_date_filter" type="bool" default="false" label="Enable Date Filter"/>
+        <setting id="min_file_date" type="date" default="2000-01-01" label="Minimum File Date" enable="eq(-1,true)"/>
+        <setting id="max_file_date" type="date" default="2100-01-01" label="Maximum File Date" enable="eq(-2,true)"/>
+        <setting id="use_parent_folder_as_category" type="bool" label="Use Parent Folder as Category" default="false" help="If enabled, the immediate parent folder name of a video file will be used as its category. If not set, it falls back to 'Filename Only' or '_'."/>
     </category>
 
-    <category label="Categorization &amp; Playlists">
-        <setting id="enable_adult_content_filter" type="bool" label="Enable Adult Content Filter" default="false" help="When enabled, content matching adult keywords will be categorized separately."/>
-        <setting id="adult_content_keywords" type="text" label="Adult Content Keywords (comma separated)" default="adult,xxx,porn" enable="eq(-1,true)" help="Keywords in filenames to identify adult content for separate handling."/>
-        <setting id="adult_category_name" type="text" label="Adult Category Folder Name" default="[COLOR black]Adult[/COLOR]" enable="eq(-2,true)" help="The name of the folder where adult content STRM links will be stored. (e.g., Adult, Private)"/>
-        <setting id="default_category_behavior" type="list" label="Default Category Behavior" default="1" help="How to categorize files not matching specific rules.">
-            <lvalues>Categorize by Parent Folder Name|Place in 'Filename Only' Category|Place in '_' Category</lvalues>
-            <lvalues>0|1|2</lvalues>
-        </setting>
-    </category>
-
-    <category label="Download Settings">
-        <setting id="download_path" type="folder" label="Default Download Path" default="special://temp/" help="Where files will be downloaded when 'Direct Download' is used."/>
-        <setting id="enable_direct_download" type="bool" label="Enable Direct Download" default="true" help="Adds a context menu option to directly download video files."/>
-        
-        <setting id="download_remove_words" type="text" label="Downloaded Filename: Words to Remove" default="download,webrip" help="Words to remove from downloaded filenames for display."/>
-        <setting id="download_switch_words" type="text" label="Downloaded Filename: Words to Replace (old=new)" default="" help="Replace words in downloaded filenames (e.g., 720p=HD)."/>
-        <setting id="download_regex_enable" type="bool" label="Downloaded Filename: Enable Regex Replace" default="false" help="Use a regular expression to modify downloaded filenames."/>
-        <setting id="download_regex_pattern" type="text" label="Downloaded Regex Pattern" default="(.*)" enable="eq(-1,true)" help="Regular expression pattern to match in downloaded filenames."/>
-        <setting id="download_regex_replace_with" type="text" label="Downloaded Regex Replace With" default="\1" enable="eq(-2,true)" help="Replacement string for the downloaded regex pattern."/>
-
-        <setting id="adult_download_path" type="folder" label="Adult Content Download Path" default="special://temp/Adult/" enable="eq(-10,true)" help="Dedicated download path for adult content, if filter is enabled."/>
-        <setting id="adult_remove_words" type="text" default="" label="Adult Content Remove Words (pipe-separated)" enable="eq(-11,true)" help="Words (pipe-separated) to remove from adult content filenames."/>
-        <setting id="adult_switch_words" type="text" default="" label="Adult Content Switch Words (old=new|...)" enable="eq(-5,true)" help="Words to replace in adult content filenames."/>
-        <setting id="adult_regex_enable" type="bool" default="false" label="Use Adult Regex Replace" enable="eq(-6,true)" help="Enable regex for advanced adult content filename replacement."/>
-        <setting id="adult_regex_pattern" type="text" default=".*" label="Adult Regex Pattern" enable="eq(-7,true)" help="Regex pattern to search for in adult content filenames."/>
-        <setting id="adult_regex_replace_with" type="text" default="" label="Adult Regex Replace With" enable="eq(-8,true)" help="String to replace matched regex pattern with in adult content filenames."/>
+    <category label="Playlist &amp; STRM Options">
+        <setting id="strm_file_extension" type="text" label="STRM File Extension" default=".strm" help="The file extension for generated media stubs."/>
+        <setting id="playlist_extension" type="text" label="Playlist File Extension" default=".m3u" help="The file extension for generated playlists."/>
     </category>
 
     <category label="Advanced Settings">
