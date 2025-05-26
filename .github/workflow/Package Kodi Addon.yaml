@@ -1,0 +1,35 @@
+name: Package Kodi Addon
+
+on:
+  push:
+    tags:
+      - 'v*'
+    paths:
+      - 'script.playlistcreator/**'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set addon version from addon.xml
+        id: addon_version
+        run: |
+          VERSION=$(grep -oP 'version="\K[0-9\.]+' script.playlistcreator/addon.xml | head -1)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Zip addon folder
+        run: |
+          cd script.playlistcreator/..
+          zip -r script.playlistcreator-${{ env.VERSION }}.zip script.playlistcreator
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: script.playlistcreator v${{ env.VERSION }}
+          files: script.playlistcreator-${{ env.VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
