@@ -1,54 +1,22 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>
-    <category label="File Selection">
-        <setting id="file_extensions" type="text" label="File extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of video file extensions to include in playlists."/>
-        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,trailer" help="Comma-separated list of words/patterns to exclude from playlist filenames."/>
-        <setting id="exclude_folders" type="text" label="Exclude folders (comma separated)" default="" help="Comma-separated list of folder names to exclude from scanning."/>
-        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="50" help="Minimum file size (in MB) to include."/>
-        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false"/>
-        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="eq(-1,true)" help="Maximum file size (in MB) to include."/>
-        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true" help="Enable scanning of subfolders within the selected base folder."/>
-        <setting id="enable_date_filter" type="bool" default="false" label="Enable Date Filter"/>
-        <setting id="min_file_date" type="date" default="2000-01-01" label="Minimum File Date" enable="eq(-1,true)" help="Include files newer than this date."/>
-    </category>
+    <category label="30000"> <setting id="30001" type="enum" label="30002" values="30003|30004" default="0" help="30005"/> </category>
 
-    <category label="Sorting">
-        <setting id="sort_mode" type="enum" label="File sort method" values="Newest First|A-Z|Z-A|Random|File Size (Smallest)|File Size (Largest)|Duration (Shortest)|Duration (Longest)" default="0" help="Method used to sort files within a playlist."/>
-        <setting id="folder_sort_mode" type="enum" label="Folder sorting" values="None|A-Z|Z-A|Custom Order" default="0" help="Method used to sort folders before processing."/>
-        <setting id="custom_folder_order" type="text" label="Custom folder order (comma separated)" default="" enable="eq(-1,3)" help="Comma-separated list of folder names for custom sorting."/>
-        <setting id="newest_files" type="number" label="Number of newest files to prioritize" default="0" help="Number of newest files to include from each folder, if applicable."/>
-        <setting id="limit_mode" type="enum" label="Limit mode" values="Per folder|Total files" default="0" help="Determines how the file limit is applied."/>
-        <setting id="file_count" type="number" label="Files per folder" default="20" enable="!eq(-1,1)" help="Maximum number of files to include per folder (if 'Per folder' limit mode)."/>
-        <setting id="total_file_count" type="number" label="Total files" default="100" enable="eq(-2,1)" help="Maximum total number of files to include in the playlist (if 'Total files' limit mode)."/>
-    </category>
+    <category label="30100"> <setting id="30101" type="text" label="30102" default=".mp4,.mkv,.avi,.mov,.wmv" help="30103"/> <setting id="30104" type="text" label="30105" default="sample,test" help="30106"/> <setting id="30107" type="text" label="30108" default="XTRA" help="30109"/> <setting id="30110" type="number" label="30111" default="5" help="30112"/> <setting id="30113" type="bool" label="30114" default="false" enable="eq(getSetting('30001'),1)"/> <setting id="30115" type="number" label="30116" default="0" enable="And(eq(getSetting('30001'),1),eq(-1,true))" help="30117"/> <setting id="30118" type="bool" label="30119" default="true" help="30120"/> <setting id="30121" type="number" label="30122" default="0" enable="eq(getSetting('30001'),1)" help="30123"/> <setting id="30124" type="bool" default="false" label="30125" enable="eq(getSetting('30001'),1)"/> <setting id="30126" type="date" default="2000-01-01" label="30127" enable="And(eq(getSetting('30001'),1),eq(-1,true))"/> <setting id="30128" type="date" default="2099-12-31" label="30129" enable="And(eq(getSetting('30001'),1),eq(-2,true))"/> </category>
 
-    <category label="Display">
-        <setting id="show_folder_names" type="bool" label="Show folder names" default="true" help="Display folder names in the playlist entries."/>
-        <setting id="show_metadata" type="bool" label="Show metadata" default="true" help="Display additional metadata (e.g., file size, duration) in playlist entries."/>
-        <setting id="show_duration" type="bool" label="Show duration" default="true" enable="eq(-1,true)" help="Display media duration in playlist entries."/>
-    </category>
+    <category label="30200"> <setting id="30201" type="enum" label="30202" values="30203|30204|30205|30206|30207|30208|30209" default="3"/> <setting id="30210" type="enum" label="30211" values="30212|30213|30214|30215" default="1" help="30216"/> <setting id="30217" type="text" label="30218" default="" enable="And(eq(getSetting('30001'),1),eq(-1,3))" help="30219"/> <setting id="30220" type="int" label="30221" default="0" enable="eq(getSetting('30001'),1)" help="30222"/> </category>
 
-    <category label="Download Settings">
-        <setting id="enable_context_menu_download" type="bool" default="false" label="Enable Context Menu Download" help="Enables the 'Download' option in the context menu for playable items."/>
-        <setting id="download_path_label" type="heading" label="Regular Download Path" enable="eq(-1,true)"/>
-        <setting id="download_path" type="folder" default="" label="Download Path" enable="eq(-2,true)" help="Default path to save downloaded files."/>
+    <category label="30300"> <setting id="30301" type="enum" label="30302" values="30303|30304|30305" default="0" /> <setting id="30306" type="number" label="30307" default="0" enable="eq(-1,1)" help="30308"/> <setting id="30309" type="number" label="30310" default="0" enable="eq(-2,2)" help="30311"/> </category>
+
+    <category label="30400"> <setting id="30401" type="bool" label="30402" default="true" help="30403"/> <setting id="30404" type="enum" label="30405" values="30406|30407|30408|30409|30410|30411" default="gold" enable="eq(-1,true)"/> <setting id="30412" type="bool" label="30413" default="false" help="30414"/> <setting id="30415" type="bool" label="30416" default="false" help="30417"/> <setting id="30418" type="bool" label="30419" default="false" help="30420"/> <setting id="30421" type="enum" label="30422" values="30423|30424" default="after" help="30425"/> </category>
+
+    <category label="30500"> <setting id="30501" type="bool" label="30502" default="false" help="30503"/> <setting id="30504" type="bool" label="30505" default="true" enable="eq(-1,true)" help="30506"/> <setting id="30507" type="bool" label="30508" default="false" enable="And(eq(getSetting('30001'),1),eq(-2,true))" help="30509"/> <setting id="30510" type="action" label="30511" action="RunScript(script.playlistcreator,action=context_info)" enable="eq(-3,true)" help="30512"/> </category>
+
+    <category label="30600" enable="eq(getSetting('30001'),1)"> <setting id="30601" type="bool" label="30602" default="false" help="30603"/> <setting id="30604" type="bool" label="30605" default="true" help="30606"/> <setting id="30607" type="bool" label="30608" default="false" help="30609"/> </category>
+
+    <category label="30700"> <setting id="30701" type="folder" default="" label="30702" help="30703"/> <setting id="30704" type="folder" default="" label="30705" enable="eq(getSetting('30001'),1)" help="30706"/> </category>
+
+    <category label="30800"> <setting id="30801" type="multiselect" label="30802" default="0" values="30803|30804|30805" help="30806"/> <setting id="30807" type="bool" default="false" label="30808" enable="Or(In(getSetting('30801'),'1'),In(getSetting('30801'),'2'))" help="30809"/> <setting id="30810" type="text" default="sample" label="30811" enable="eq(-1,true)" help="30812"/> <setting id="30813" type="text" default="" label="30814" enable="eq(-2,true)" help="30815"/> <setting id="30816" type="bool" default="false" label="30817" enable="And(eq(getSetting('30001'),1),eq(-3,true))" help="30818"/> <setting id="30819" type="text" default=".*" label="30820" enable="And(eq(getSetting('30001'),1),eq(-4,true))" help="30821"/> <setting id="30822" type="text" default="" label="30823" enable="And(eq(getSetting('30001'),1),eq(-5,true))" help="30824"/> <setting id="30825" type="bool" default="false" label="30826" enable="And(eq(getSetting('30001'),1),In(getSetting('30801'),'2'))" help="30827"/> <setting id="30828" type="text" default="adult,gay,porn" label="30829" enable="eq(-1,true)" help="30830"/> <setting id="30831" type="text" default="" label="30832" enable="eq(-2,true)" help="30833"/> <setting id="30834" type="bool" default="false" label="30835" enable="And(eq(getSetting('30001'),1),eq(-3,true))" help="30836"/> <setting id="30837" type="text" default=".*" label="30838" enable="And(eq(getSetting('30001'),1),eq(-4,true))" help="30839"/> <setting id="30840" type="text" default="" label="30841" enable="And(eq(getSetting('30001'),1),eq(-5,true))" help="30842"/> </category>
         
-        <setting id="download_cleanup_regular_toggle" type="bool" default="true" label="Enable Regular Filename Cleanup" enable="eq(-3,true)" help="Apply cleaning rules to regular filenames."/>
-        <setting id="download_cleanup_section_label" type="heading" label="Regular Filename Cleanup Rules" enable="eq(-1,true)"/>
-        <setting id="download_delete_words_regular" type="text" default="sample|trailer|bonus" label="Remove Words" enable="eq(-2,true)" help="Words (pipe-separated) to remove from filenames."/>
-        <setting id="download_switch_words_regular" type="text" default="" label="Switch Words (old=new|...)" enable="eq(-3,true)" help="Words to replace (e.g., 'old=new|another=different')."/>
-        <setting id="download_regex_enable_regular" type="bool" default="false" label="Use Regex Replace" enable="eq(-4,true)" help="Enable regex for advanced filename replacement."/>
-        <setting id="download_regex_pattern_regular" type="text" default=".*" label="Regex Pattern" enable="eq(-5,true)" help="Regex pattern to search for."/>
-        <setting id="download_regex_replace_with_regular" type="text" default="" label="Regex Replace With" enable="eq(-6,true)" help="String to replace matched regex pattern with."/>
-
-        <setting id="enable_adult_download_section" type="bool" default="false" label="Enable Adult Content Download Settings" enable="eq(-7,true)" help="Separate settings for adult content downloads."/>
-        <setting id="download_cleanup_adult_section_label" type="heading" label="Adult Content Download Settings" enable="eq(-1,true)"/>
-        <setting id="adult_download_path" type="folder" default="" label="Adult Download Path" enable="eq(-2,true)" help="Path to save adult content downloads. Overrides regular path."/>
-        <setting id="download_cleanup_adult_toggle" type="bool" default="true" label="Enable Adult Filename Cleanup" enable="eq(-3,true)" help="Apply cleaning rules to adult content filenames."/>
-        <setting id="download_delete_words_adult" type="text" default="adult|18+|xxx" label="Adult Content Remove Words" enable="eq(-4,true)" help="Words (pipe-separated) to remove from adult content filenames."/>
-        <setting id="download_switch_words_adult" type="text" default="" label="Adult Content Switch Words (old=new|...)" enable="eq(-5,true)" help="Words to replace in adult content filenames."/>
-        <setting id="download_regex_enable_adult" type="bool" default="false" label="Use Adult Regex Replace" enable="eq(-6,true)" help="Enable regex for advanced adult content filename replacement."/>
-        <setting id="download_regex_pattern_adult" type="text" default=".*" label="Adult Regex Pattern" enable="eq(-7,true)" help="Regex pattern to search for in adult content filenames."/>
-        <setting id="download_regex_replace_with_adult" type="text" default="" label="Adult Regex Replace With" enable="eq(-8,true)" help="String to replace matched regex pattern with in adult content filenames."/>
-    </category>
+    <category label="30900" enable="eq(getSetting('30001'),1)"> <setting id="30901" type="bool" label="30902" default="false"/> <setting id="30903" type="heading" label="30904"/> <setting id="30905" type="bool" label="30906" default="false" help="30907"/> <setting id="30908" type="bool" label="30909" default="false" enable="eq(-1,true)" help="30910"/> <setting id="30911" type="heading" label="30912"/> <setting id="30913" type="bool" label="30914" default="false" help="30915"/> <setting id="30916" type="bool" label="30917" default="false" enable="eq(-1,true)" help="30918"/> <setting id="30919" type="heading" label="30920"/> <setting id="30921" type="bool" label="30922" default="false" help="30923"/> <setting id="30924" type="heading" label="30925"/> <setting id="30926" type="bool" label="30927" default="false" help="30928"/> <setting id="30929" type="number" label="30930" default="3" enable="eq(-1,true)" help="30931"/> <setting id="30932" type="heading" label="30933"/> <setting id="30934" type="bool" label="30935" default="false" help="30936"/> </category>
 </settings>
