@@ -3,110 +3,274 @@ import xbmc
 import xbmcaddon
 import xbmcvfs
 import json
-from .constants import ADDON_ID, CONFIG_FILE
+import re
+import datetime
+import xbmcgui
+import time
+
+# Attempt to import xbmc.VideoInfoTag for richer media info
+try:
+    import xbmc.VideoInfoTag
+except ImportError:
+    xbmc.log("WARNING: xbmc.VideoInfoTag not available. Media info might be limited.", xbmc.LOGWARNING)
+    # Define a dummy class if not available to prevent crashes
+    class VideoInfoTag:
+        def __init__(self):
+            self.duration = 0
+            self.width = 0
+            self.height = 0
+            self.mediatype = ""
+            self.year = 0
+            self.art = {} # Ensure 'art' attribute exists if accessed
+        def load(self, path): return False # Always fails for dummy
+        def getduration(self): return self.duration
+        def getwidth(self): return self.width
+        def getheight(self): return self.height
+        def getmediatype(self): return self.mediatype
+        def getyear(self): return self.year
+        def getart(self, key): return self.art.get(key, "") # Dummy getart
+
+    xbmc.VideoInfoTag = VideoInfoTag
+
+
+# Constants (assuming constants.py is available and correct)
+# Zorg ervoor dat constants.py ook up-to-date is met de correcte ADDON_ID
+from resources.lib.constants import ADDON_ID, CONFIG_FILE, VIDEO_EXTS
+from resources.lib.profiles import NORMAL_PROFILE_SETTINGS, PRO_PROFILE_SETTINGS
+
 
 addon = xbmcaddon.Addon(ADDON_ID)
 log_prefix = f"[{ADDON_ID}]"
-
 ADDON_PROFILE = xbmcvfs.translatePath(addon.getAddonInfo('profile'))
+# PLAYLIST_DIR wordt nu opgehaald via get_setting, dus deze regel is niet meer nodig als globale variabele
+# PLAYLIST_DIR = xbmcvfs.translatePath(get_setting('playlist_output_path', 'special://home/playlists/'))
 
-def log(message, level=xbmc.LOGINFO):
-    xbmc.log(f"{log_prefix} {message}", level)
+def log(msg, level=xbmc.LOGDEBUG):
+    """Logs messages to the Kodi log file."""
+    xbmc.log(f"{log_prefix} {msg}", level)
 
-def get_setting(id, default=None):
-    return addon.getSetting(id) or default
+def get_setting(key, default_value=None):
+    """Retrieves an addon setting, with a fallback default value."""
+    try:
+        value = addon.getSetting(str(key)) # Zorg dat key een string is voor addon.getSetting
+        
+        # Kodi returns 'true'/'false' for bools, convert to Python bool
+        if value.lower() == 'true':
+            return True
+        elif value.lower() == 'false':
+            return False
+        return value
+    except Exception as e:
+        log(f"Error getting setting '{key}': {e}. Using default value: {default_value}", xbmc.LOGWARNING)
+        return default_value
+
+def get_bool_setting(key, default_value=False):
+    """Retrieves a boolean addon setting and converts it to Python bool."""
+    value = get_setting(key, str(default_value).lower()) # Ensure default is 'true' or 'false' string
+    return str(value).lower() == 'true'
+
+def get_int_setting(key, default_value=0):
+    """Retrieves an integer addon setting."""
+    try:
+        return int(get_setting(key, str(default_value)))
+    except (ValueError, TypeError):
+        log(f"Error converting setting '{key}' to int. Using default: {default_value}", xbmc.LOGWARNING)
+        return default_value
+
+def get_text_setting(key, default_value=""):
+    """Retrieves a text addon setting."""
+    return get_setting(key, default_value)
+
+
+def set_setting(key, value):
+    """Sets an addon setting."""
+    try:
+        addon.setSetting(str(key), str(value)) # Zorg dat key een string is voor addon.setSetting
+        log(f"Set setting '{key}' to '{value}'", xbmc.LOGDEBUG)
+    except Exception as e:
+        log(f"Error setting '{key}' to '{value}': {e}", xbmc.LOGERROR)
+
+def get_string(string_id):
+    """Retrieves a translated string from the addon."""
+    return addon.getLocalizedString(string_id)
+
+def save_json(data, file_path):
+    """Saves data to a JSON file."""
+    try:
+        with xbmcvfs.File(file_path, 'w') as f:
+            json.dump(data, f, indent=4)
+        log(f"Data saved to {file_path}", xbmc.LOGDEBUG)
+        return True
+    except Exception as e:
+        log(f"Error saving JSON to {file_path}: {e}", xbmc.LOGERROR)
+        return False
+
+def load_json(file_path):
+    """Loads data from a JSON file."""
+    if xbmcvfs.exists(file_path):
+        try:
+            with xbmcvfs.File(file_path, 'r') as f:
+                data = json.load(f)
+            log(f"Data loaded from {file_path}", xbmc.LOGDEBUG)
+            return data
+        except Exception as e:
+            log(f"Error loading JSON from {file_path}: {e}", xbmc.LOGERROR)
+    else:
+        log(f"File not found: {file_path}", xbmc.LOGDEBUG)
+    return None
 
 def translate_path(path):
-    """Translates a special path (like special://) to a system path."""
+    """Translates a Kodi special path."""
     return xbmcvfs.translatePath(path)
 
-def is_valid_file(filename):
-    ext = os.path.splitext(filename)[1].lower()
-    allowed_extensions_str = get_setting('file_extensions', '.mp4,.mkv,.avi,.mov,.wmv')
-    allowed_extensions = [e.strip() for e in allowed_extensions_str.split(',') if e.strip()]
-    
-    if ext not in allowed_extensions:
-        return False
-
-    min_size_mb = float(get_setting('min_file_size', '50'))
-    max_size_mb = float(get_setting('max_file_size', '0'))
-    enable_max_size = get_setting('enable_max_size', 'false') == 'true'
-
-    file_size_bytes = -1 # Default value
-
-    try:
-        file_size_bytes = xbmcvfs.size(filename)
-    except AttributeError:
-        # This should ideally not happen on Kodi 21.2. If it does, there's a deeper environment issue.
-        log(f"CRITICAL WARNING: xbmcvfs.size is not available on this Kodi version for {filename}. Size checks will be skipped.", xbmc.LOGERROR)
-        # If min_size is set and we can't get size, we must exclude to be safe.
-        if min_size_mb > 0:
-            log(f"Excluding {filename} (cannot determine size for min_size_mb check due to missing xbmcvfs.size).", xbmc.LOGINFO)
-            return False
-        file_size_bytes = 0 # Assume 0 size to pass max_size_mb if not strict min_size or if it can't be checked
-
-    if file_size_bytes == -1: # xbmcvfs.size returns -1 if file doesn't exist or is inaccessible
-        log(f"Warning: File {filename} not found or inaccessible via xbmcvfs.size(). Skipping size check.", xbmc.LOGWARNING)
-        if min_size_mb > 0: # If min_size is required, and we can't get size, exclude
-            log(f"Excluding {filename} (inaccessible for min_size_mb check).", xbmc.LOGINFO)
-            return False
-        # If size is -1 but min_size is 0, let it pass and continue with other checks
-        file_size_bytes = 0 # Assume 0 size to pass max_size_mb if not strict min_size
-
-    if min_size_mb > 0 and file_size_bytes < min_size_mb * 1024 * 1024:
-        log(f"Excluding {filename} (size {file_size_bytes / (1024 * 1024):.2f} MB below min {min_size_mb} MB)", xbmc.LOGINFO)
-        return False
-
-    if enable_max_size and max_size_mb > 0 and file_size_bytes > max_size_mb * 1024 * 1024:
-        log(f"Excluding {filename} (size {file_size_bytes / (1024 * 1024):.2f} MB above max {max_size_mb} MB)", xbmc.LOGINFO)
-        return False
-
-    # Check exclude pattern in filename (e.g., "sample", "trailer")
-    exclude_pattern_str = get_setting('exclude_pattern', 'sample,trailer')
-    exclude_patterns = [p.strip().lower() for p in exclude_pattern_str.split(',') if p.strip()]
-    
-    file_name_lower = os.path.basename(filename).lower()
-    if any(pattern in file_name_lower for pattern in exclude_patterns):
-        log(f"Excluding {filename} (matches exclude pattern)", xbmc.LOGINFO)
-        return False
-
-    # Check date filter (if enabled)
-    if get_setting('enable_date_filter', 'false') == 'true':
+def create_backup(file_path):
+    """Creates a backup of a file if backups are enabled."""
+    if get_bool_setting('30601', False): # 'enable_backups'
+        backup_path = file_path + ".bak"
         try:
-            file_stat = xbmcvfs.stat(filename)
-            file_mtime = file_stat['st_mtime'] # Modification time
-            
-            min_date_str = get_setting('min_file_date', '2000-01-01')
-            max_date_str = get_setting('max_file_date', '2100-01-01')
-
-            from datetime import datetime
-            min_timestamp = datetime.strptime(min_date_str, '%Y-%m-%d').timestamp()
-            max_timestamp = datetime.strptime(max_date_str, '%Y-%m-%d').timestamp()
-
-            if not (min_timestamp <= file_mtime <= max_timestamp):
-                log(f"Excluding {filename} (modification date outside range)", xbmc.LOGINFO)
-                return False
-        except AttributeError:
-            # This should also ideally not happen on Kodi 21.2.
-            log(f"CRITICAL WARNING: xbmcvfs.stat is not available on this Kodi version for {filename}. Date checks will be skipped.", xbmc.LOGERROR)
-            return True # If stat fails, assume valid for date purposes to not block other checks
+            if xbmcvfs.exists(file_path):
+                xbmcvfs.copy(file_path, backup_path)
+                log(f"Created backup: {backup_path}", xbmc.LOGINFO)
+                return True
         except Exception as e:
-            log(f"Error checking file date for {filename}: {e}", xbmc.LOGWARNING)
-            return True # If other date check fails, assume valid for date purposes to not block other checks
+            log(f"Failed to create backup for {file_path}: {e}", xbmc.LOGERROR)
+    return False
 
-    return True
-
-def clean_display_name(filename_or_url):
-    """
-    Extracts the base filename without extension from a path or URL.
-    This function currently does NOT apply any cleaning rules (like removing words or regex).
-    Full cleaning logic will be handled later, potentially for metadata display.
-    """
-    # Handles both local paths and URLs
-    if "://" in filename_or_url: # Likely a URL
-        base_name = filename_or_url.split('/')[-1].split('?')[0] # Get last part, remove query params
-    else: # Likely a local path
-        base_name = os.path.basename(filename_or_url)
+def apply_profile_settings(profile_mode):
+    """Applies settings based on the selected user profile (Normal/Pro)."""
+    settings_to_apply = {}
+    if profile_mode == '0': # Normal
+        settings_to_apply = NORMAL_PROFILE_SETTINGS
+        log("Applying Normal profile settings.", xbmc.LOGINFO)
+    elif profile_mode == '1': # Pro
+        settings_to_apply = PRO_PROFILE_SETTINGS
+        log("Applying Pro profile settings.", xbmc.LOGINFO)
     
-    name_without_extension = os.path.splitext(base_name)[0]
-    return name_without_extension.strip()
+    for key, value in settings_to_apply.items():
+        set_setting(key, value)
+    xbmc.executebuiltin("Addon.OpenSettings(script.playlistcreator)") # Refresh settings UI if open
+    xbmc.executebuiltin("SetFocus(0)") # Set focus away from settings to apply changes
+
+
+def get_file_duration_from_kodi(filepath):
+    """
+    Haalt de duur van een videobestand op via Kodi's VideoInfoTag.
+    Geeft 0 terug als de duur niet bepaald kan worden.
+    """
+    try:
+        # Probeer eerst met xbmc.VideoInfoTag als beschikbaar
+        if hasattr(xbmc, 'VideoInfoTag'):
+            video_info = xbmc.VideoInfoTag()
+            if video_info.load(filepath):
+                return video_info.getduration()
+        
+        # Fallback voor oudere Kodi versies of als VideoInfoTag niet werkt
+        # Deze fallback is minder betrouwbaar en kan in sommige Kodi-versies problemen geven
+        # Aangezien we een dummy class hebben voor VideoInfoTag, zou dit pad minder vaak nodig moeten zijn.
+        list_item = xbmcgui.ListItem(path=filepath)
+        # Kodi v20+ heeft list_item.getVideoInfoTag() in Python, maar het is niet altijd gevuld.
+        # Voor v19 en ouder is de info vaak al beschikbaar via ListItem.
+        info = list_item.getVideoInfoTag() # Dit retourneert een xbmc.VideoInfoTag object (of None)
+        if info:
+            return info.getDuration() # Gebruik getDuration() van het VideoInfoTag object
+    except Exception as e:
+        log(f"Error getting duration for {filepath} using Kodi: {e}", xbmc.LOGWARNING)
+    return 0
+
+
+def format_display_entry(file_info):
+    """
+    Format the display entry for the playlist, including folder name, metadata, and cleaning.
+    """
+    filename = os.path.basename(file_info['path'])
+    
+    # Check cleaning scope for playlist creation
+    cleaning_scope_settings = get_setting('30801', '0').split(',') # '0' is Playlist Creation Process
+    apply_playlist_cleaning = '0' in cleaning_scope_settings 
+
+    clean_filename = filename
+    if apply_playlist_cleaning:
+        temp_filename = filename
+        if get_bool_setting('30807', False): # Use the general cleaning toggle
+            remove_words = [w.strip() for w in get_setting('30810', '').split(',') if w.strip()]
+            switch_words = [w.strip() for w in get_setting('30813', '').split(',') if w.strip()]
+            regex_enable = get_bool_setting('30816', False)
+            regex_pattern = get_setting('30819', '')
+            regex_replace = get_setting('30822', '')
+
+            temp_filename = _apply_simple_cleaning_rules(
+                temp_filename, 
+                remove_words, 
+                switch_words, 
+                regex_enable, 
+                regex_pattern, 
+                regex_replace
+            )
+        clean_filename = temp_filename
+
+
+    metadata_string = ""
+    if get_bool_setting('30412', False): # 'show_metadata'
+        year = file_info.get('year', 0)
+        resolution = file_info.get('resolution', '')
+        if year > 0:
+            metadata_string += f" ({year})"
+        if resolution:
+            metadata_string += f" [{resolution}]"
+    
+    if get_bool_setting('30415', False): # 'show_duration'
+        duration_seconds = file_info.get('duration', 0)
+        if duration_seconds > 0:
+            minutes = duration_seconds // 60
+            seconds = duration_seconds % 60
+            metadata_string += f" [{minutes:02d}:{seconds:02d}]"
+
+    if get_bool_setting('30418', False): # 'show_file_size'
+        size_bytes = file_info.get('size', 0)
+        if size_bytes > 0:
+            size_mb = size_bytes / (1024 * 1024)
+            metadata_string += f" [{size_mb:.1f}MB]"
+
+    folder_name_part = ""
+    if get_bool_setting('30401', True): # 'show_folder_names'
+        folder_path = os.path.dirname(file_info['path'])
+        folder_name = os.path.basename(folder_path.rstrip(os.sep))
+        if folder_name:
+            folder_color = get_setting('30404', 'gold') # 'folder_name_color'
+            folder_name_part = f"[COLOR {folder_color}]{folder_name}[/COLOR]"
+    
+    display_name = ""
+    # We hadden geen setting voor 'folder_name_position' in settings.xml, voeg deze toe in de settings.xml
+    # en zorg dat de default waarde 'after' is als de setting ontbreekt.
+    # Ik zal deze toevoegen aan de settings.xml hierboven.
+    folder_position = get_text_setting('30421', 'after') # Nieuwe setting ID voor 'folder_name_position'
+    
+    if folder_name_part:
+        if folder_position == 'before':
+            display_name = f"{folder_name_part} {clean_filename}{metadata_string}"
+        else: # 'after' or any other value
+            display_name = f"{clean_filename}{metadata_string} {folder_name_part}"
+    else:
+        display_name = f"{clean_filename}{metadata_string}"
+
+    return display_name.strip()
+
+# Helper function for cleaning, can be reused
+def _apply_simple_cleaning_rules(text, remove_words, switch_words, regex_enable, regex_pattern, regex_replace):
+    temp_text = text
+
+    for word in remove_words:
+        if word:
+            temp_text = re.sub(r'\b' + re.escape(word) + r'\b', '', temp_text, flags=re.IGNORECASE).strip()
+    
+    for switch_pair in switch_words:
+        if '=' in switch_pair:
+            old, new = switch_pair.split('=', 1)
+            temp_text = re.sub(re.escape(old), new, temp_text, flags=re.IGNORECASE)
+    
+    if regex_enable and regex_pattern:
+        try:
+            temp_text = re.sub(regex_pattern, regex_replace, temp_text, flags=re.IGNORECASE)
+        except re.error as regex_e:
+            log(f"Regex error during cleaning: {regex_e}", xbmc.LOGERROR)
+    return temp_text.strip()
