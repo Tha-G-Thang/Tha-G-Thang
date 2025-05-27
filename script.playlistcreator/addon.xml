@@ -2,7 +2,7 @@
 <addon 
   id="script.playlistcreator" 
   name="Playlist [COLOR gold]C[/COLOR]-reator Plus" 
-  version="1.5.1" 
+  version="1.5.2" 
   provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
   
   <requires>
@@ -23,18 +23,17 @@
     
     <description lang="en">
       Creates Sets and optimized video playlists from Personal collected Media.
-      This version focuses on playlist creation and media playback, without integrated download features.
     </description>
     
     <news>
-      [B]v1.5.1[/B] - Added language strings (English, Dutch, Portuguese).
-      [B]v1.5.0[/B] - Implemented user profiles (Normal/Pro). Added context menu options for Play and Download. Improved file filtering options (min/max size, date filter, scan depth). Enhanced playlist ordering (custom folder order, newest files to top). Added download filename cleanup and adult content specific download settings.
-      [B]v1.4.5[/B] - Pre-Refactor with AI Integration.
+      [B]v1.5.2[/B]
+      - New settings menu.
     </news>
     
     <assets>
       <icon>resources/icon.png</icon>
       <fanart>resources/fanart.jpg</fanart>
+      <changelog>changelog.txt</changelog>
     </assets>
   </extension>
 </addon>
