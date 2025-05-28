@@ -1,97 +1,39 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8"?>
 <settings>
-    <category label="General">
-        <setting id="user_profile_mode" type="enum" label="User Profile Mode" values="Normal|Pro" default="0" help="Select between Normal and Pro user profiles. Pro mode enables advanced features automatically."/>
-        <setting id="debug_logging" type="bool" label="Enable Debug Logging" default="false" help="Enable verbose logging for debugging purposes."/>
-        <setting id="show_scan_progress" type="bool" label="Show Scan Progress" default="true" help="Show a progress dialog during folder scanning."/>
-    </category>
-
     <category label="File Selection">
-        <setting id="file_extensions" type="text" label="File extensions" default=".mp4,.mkv,.avi,.mov,.wmv" help="Comma-separated list of video file extensions to include in playlists."/>
-        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,test" help="Comma-separated list of words/patterns to exclude from playlist filenames."/>
-        <setting id="exclude_folders" type="text" label="Exclude folders (comma separated)" default="XTRA" help="Comma-separated list of folder names to exclude from scanning."/>
-        <setting id="min_file_size" type="number" label="Minimum file size (MB)" default="5" help="Minimum file size (in MB) to include."/>
-        <setting id="enable_max_size" type="bool" label="Enable maximum file size" default="false" enable="eq(getSetting('user_profile_mode'),1)"/>
-        <setting id="max_file_size" type="number" label="Maximum file size (MB)" default="0" enable="And(eq(getSetting('user_profile_mode'),1),eq(-1,true))" help="Maximum file size (in MB) to include."/>
-        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true" help="Enable scanning of subfolders within the selected base folder."/>
-        <setting id="scan_depth" type="number" label="Scan Depth (0 for unlimited, 1 for current folder only)" default="0" enable="eq(getSetting('user_profile_mode'),1)" help="Limit subfolder scanning depth. 0 for unlimited recursion. 1 means no subfolders."/>
-        <setting id="enable_date_filter" type="bool" label="Enable Date Filter" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Filter files by creation or modification date."/>
-        <setting id="filter_start_date" type="text" label="Start Date (YYYY-MM-DD)" default="" enable="And(eq(getSetting('user_profile_mode'),1),eq(-1,true))" help="Files created/modified after this date will be included."/>
-        <setting id="filter_end_date" type="text" label="End Date (YYYY-MM-DD)" default="" enable="And(eq(getSetting('user_profile_mode'),1),eq(-2,true))" help="Files created/modified before this date will be included."/>
+        <setting id="file_extensions" type="text" label="Supported formats" default=".mp4,.mkv,.avi" help="Comma-separated video extensions"/>
+        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,test"/>
+        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true"/>
+        <setting id="limit_files_per_folder" type="bool" label="Limit files per folder in playlist" default="false"/>
+        <setting id="max_files_per_folder" type="number" label="Maximum files per folder" default="10" enable="eq(-1,true)"/>
+        <setting id="prioritize_new_files" type="bool" label="Show newest files first" default="true" enable="eq(-2,true)"/>
     </category>
 
-    <category label="Playlist Creation">
-        <setting id="playlist_output_folder" type="folder" label="Playlist output folder" default="special://home/playlists/" help="Select the folder where generated playlists will be saved."/>
-        <setting id="playlist_file_name" type="text" label="Playlist filename (no extension)" default="my_playlist" help="The base name for generated playlist files (e.g., 'my_playlist' for 'my_playlist.m3u')."/>
-        <setting id="playlist_file_format" type="enum" label="Playlist file format" values="M3U|XSPF" default="0" help="Choose the output format for playlists (M3U is widely compatible)."/>
-        <setting id="duplicate_handling" type="enum" label="Duplicate handling" values="Skip|Remove" default="0" enable="eq(getSetting('user_profile_mode'),1)" help="Choose how to handle duplicate files found during scanning."/>
-        <setting id="cleanup_playlist_folder" type="bool" label="Cleanup playlist folder before creation" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Delete old playlist files in the output folder before creating new ones."/>
-        <setting id="enable_backups" type="bool" label="Enable Backups" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Create a backup of the current playlist file before overwriting."/>
-    </category>
-
-    <category label="Playlist Display &amp; Formatting">
-        <setting id="show_folder_names" type="bool" label="Show folder names in playlist entries" default="true" help="Include the parent folder name in the displayed playlist entry."/>
-        <setting id="folder_name_position" type="enum" label="Folder name position" values="before|after" default="after" enable="eq(-1,true)" help="Position of the folder name relative to the filename in the display entry."/>
-        <setting id="folder_name_color" type="enum" label="Folder name color" values="white|red|green|blue|yellow|gold|cyan|magenta" default="gold" enable="eq(-2,true)" help="Color of the folder name in the playlist entry."/>
-        <setting id="add_file_duration" type="bool" label="Add file duration to display" default="false" help="Display the duration of the video file in the playlist entry (e.g., (01:23))."/>
-        <setting id="add_file_size" type="bool" label="Add file size to display" default="false" help="Display the file size in the playlist entry (e.g., [123.4MB])."/>
-        <setting id="cleaning_scope" type="multiselect" label="Apply cleaning rules during" values="Playlist Creation Process|Playlist Display" default="0" help="Choose when to apply filename cleaning rules: during the creation process or just for display."/>
-        
-        <setting id="download_cleanup_toggle" type="bool" default="false" label="Enable General Filename Cleanup" help="Apply cleaning rules to all filenames (for playlist display and general downloads)."/>
-        <setting id="download_delete_words" type="text" default="sample,test" label="General Remove Words (comma separated)" enable="eq(-1,true)" help="Words (comma-separated) to remove from filenames (e.g., sample, test)."/>
-        <setting id="download_switch_words" type="text" default="" label="General Switch Words (old=new, ...)" enable="eq(-2,true)" help="Words to replace in filenames (e.g., old=new, ...)."/>
-        <setting id="download_regex_enable" type="bool" default="false" label="Use General Regex Replace" enable="eq(-3,true)" help="Enable regex for advanced filename replacement."/>
-        <setting id="download_regex_pattern" type="text" default=".*" label="General Regex Pattern" enable="eq(-4,true)" help="Regex pattern to search for in filenames."/>
-        <setting id="download_regex_replace_with" type="text" default="" label="General Regex Replace With" enable="eq(-5,true)" help="String to replace matched regex pattern with."/>
-    </category>
-
-    <category label="Playlist Ordering">
-        <setting id="overall_sort_mode" type="enum" label="Overall Sort Mode" values="A-Z (Filename)|Z-A (Filename)|Oldest First|Newest First|Random" default="0" help="Method to sort all files in the playlist."/>
-        <setting id="overall_sort_reverse" type="bool" label="Reverse Overall Sort Order" default="false" enable="!eq(-1,4)" help="Reverse the order of the selected overall sort mode (does not apply to 'Random')."/>
-        <setting id="folder_sort_mode" type="enum" label="Folder Sort Mode" values="None (A-Z)|A-Z|Z-A|Custom" default="0" help="Method to sort folders within the playlist."/>
-        <setting id="custom_folder_order" type="text" label="Custom Folder Order (comma separated)" default="" enable="eq(-1,3)" help="Define a specific order for folders. Folders not in this list will be appended alphabetically."/>
-        <setting id="limit_files_per_folder" type="bool" label="Limit files per folder" default="false" help="Limit the number of files included from each folder."/>
-        <setting id="files_per_folder_count" type="number" label="Files per folder" default="0" enable="eq(-1,true)" help="Maximum number of files to include from each folder (0 for unlimited)."/>
-        <setting id="newest_files_per_folder_to_top" type="bool" label="Move newest files to top within folder" default="false" enable="eq(-2,true)" help="If limiting files, move the newest files to the top of the list for each folder."/>
-        <setting id="newest_files_per_folder_to_top_count" type="number" label="Count of newest files to move" default="0" enable="eq(-1,true)" help="Number of newest files to move to the top of each folder's list (0 for all newest)."/>
-        <setting id="enable_global_file_limit" type="bool" label="Enable Global File Limit" default="false" help="Limit the total number of files in the entire playlist."/>
-        <setting id="global_file_count" type="number" label="Global File Count" default="0" enable="eq(-1,true)" help="Maximum total number of files in the playlist (0 for unlimited)."/>
-    </category>
-
-    <category label="Context Menu Integration">
-        <setting id="enable_context_menu" type="bool" label="Enable Context Menu" default="true" help="Enable context menu options for video files in Kodi."/>
-        <setting id="context_menu_play" type="bool" label="Add 'Play' to Context Menu" default="true" enable="eq(-1,true)" help="Add a 'Play with Playlist Creator' option to the context menu."/>
-        <setting id="context_menu_download" type="bool" label="Add 'Download' to Context Menu" default="true" enable="eq(-2,true)" help="Add a 'Download with Playlist Creator' option to the context menu."/>
-        <setting id="context_menu_adult" type="bool" label="Add 'Download Adult' to Context Menu" default="false" enable="And(eq(getSetting('user_profile_mode'),1),eq(getSetting('enable_adult_features'),true),eq(-1,true))" help="Add a 'Download Adult Content' option to the context menu (Pro profile and Adult Features enabled)."/>
-    </category>
-
-    <category label="Download Settings">
-        <setting id="download_path" type="folder" label="Default Download Path" default="special://home/downloads/" help="Path to save downloaded files."/>
-        <setting id="enable_adult_features" type="bool" label="Enable Adult Content Features" default="false" help="Toggle to enable or disable all adult content related features and settings."/>
-    </category>
-
-    <category label="Adult Content Settings" enable="eq(getSetting('enable_adult_features'),true)">
-        <setting id="adult_download_path" type="folder" default="" label="Adult Content Download Path" help="Path to save adult downloads. Overrides regular download path if set for adult content."/>
-        <setting id="download_cleanup_adult_toggle" type="bool" default="false" label="Enable Adult Filename Cleanup" help="Apply cleaning rules specifically to adult content filenames."/>
-        <setting id="download_delete_words_adult" type="text" default="adult,gay,porn" label="Adult Content Remove Words (comma separated)" enable="eq(-1,true)" help="Words (comma-separated) to remove from adult filenames."/>
-        <setting id="download_switch_words_adult" type="text" default="" label="Adult Content Switch Words (old=new, ...)" enable="eq(-2,true)" help="Words to replace in adult filenames (e.g., old=new, ...)."/>
-        <setting id="download_regex_enable_adult" type="bool" default="false" label="Use Adult Regex Replace" enable="eq(-3,true)" help="Enable regex for advanced adult filename replacement."/>
-        <setting id="download_regex_pattern_adult" type="text" default=".*" label="Adult Regex Pattern" enable="And(eq(-1,true),eq(-4,true))" help="Regex pattern to search for in adult filenames."/>
-        <setting id="download_regex_replace_with_adult" type="text" default="" label="Adult Regex Replace With" enable="And(eq(-2,true),eq(-5,true))" help="String to replace matched regex pattern with in adult filenames."/>
+    <category label="Playlist Display">
+        <setting id="show_folder_names" type="bool" label="Show folder names in playlist" default="true"/>
+        <setting id="folder_name_color" type="enum" label="Folder name color" values="[COLOR blue]Blue[/COLOR]|[COLOR green]Green[/COLOR]|[COLOR black]Black[/COLOR]" default="blue" enable="eq(-1,true)"/>
+        <setting id="show_metadata" type="bool" label="Show metadata" default="true"/>
+        <setting id="metadata_template" type="text" label="Display format" default="{title} ({duration})" enable="eq(-1,true)"/>
     </category>
 
     <category label="AI Features">
-        <setting id="enable_ai_filename_cleaning" type="bool" label="Enable AI Filename Cleaning" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Use AI-enhanced cleaning for filenames (e.g., smart removal of unwanted patterns)."/>
-        <setting id="ai_cleaning_aggressive" type="bool" label="Aggressive AI Cleaning" default="false" enable="And(eq(getSetting('user_profile_mode'),1),eq(-1,true))" help="Apply more aggressive AI cleaning rules, potentially changing more of the filename."/>
+        <setting id="enable_ai" type="bool" label="Enable AI Processing" default="false"/>
+        
+        <!-- Algemene AI cleaning -->
+        <setting id="ai_clean_filenames" type="bool" label="Smart filename cleaning" default="false" enable="eq(-1,true)"/>
+        
+        <!-- Geavanceerde AI (alleen zichtbaar als AI aan) -->
+        <setting id="ai_metadata_enhance" type="bool" label="Enhance metadata" default="false" enable="eq(-2,true)"/>
+        <setting id="ai_auto_tagging" type="bool" label="Auto-tag content" default="false" enable="eq(-3,true)"/>
+    </category>
 
-        <setting id="ai_heading_tagging" type="heading" label="AI Auto-Tagging"/>
-        <setting id="enable_ai_auto_tagging" type="bool" label="Enable AI Auto-Tagging" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Automatically generate tags for files based on their content/filename."/>
-        
-        <setting id="ai_heading_smart_playlists" type="heading" label="AI Smart Playlists"/>
-        <setting id="enable_ai_smart_playlists" type="bool" label="Enable AI Smart Playlists" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Group similar content into smart playlists using AI clustering."/>
-        <setting id="ai_cluster_count" type="number" label="Number of Smart Playlist Clusters" default="3" enable="And(eq(getSetting('user_profile_mode'),1),eq(-1,true))" help="Specify how many distinct smart playlists (clusters) to create."/>
-        
-        <setting id="ai_heading_search" type="heading" label="AI Natural Language Search"/>
-        <setting id="enable_ai_natural_search" type="bool" label="Enable AI Natural Language Search" default="false" enable="eq(getSetting('user_profile_mode'),1)" help="Use AI for more intuitive natural language search queries."/>
+    <category label="Downloads">
+        <setting id="download_path" type="folder" label="Default download folder" default="special://downloads/"/>
+        <setting id="enable_auto_clean" type="bool" label="Auto-clean filenames" default="true"/>
+    </category>
+
+    <category label="Advanced" collapsed="true">
+        <setting id="debug_logging" type="bool" label="Debug mode" default="false"/>
+        <setting id="backup_playlists" type="bool" label="Backup playlists" default="true"/>
     </category>
 </settings>
