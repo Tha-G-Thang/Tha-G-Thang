@@ -2,38 +2,45 @@
 <addon 
   id="script.playlistcreator" 
   name="Playlist [COLOR gold]C[/COLOR]-reator Plus" 
-  version="1.5.2" 
+  version="0.9.8b" 
   provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
   
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
+    <import addon="script.module.mutagen" version="1.45.1"/>
   </requires>
 
   <extension point="xbmc.python.script" library="default.py">
     <provides>executable</provides>
   </extension>
-  
-  <extension point="xbmc.python.script" library="resources/lib/menu_handler.py">
-    <provides>executable</provides>
-    <id>script.playlistcreator.menu_handler</id>
-  </extension>
 
   <extension point="xbmc.addon.metadata">
-    <summary lang="en">Advanced playlist creator</summary>
+    <summary lang="en">Advanced playlist manager for Kodi</summary>
     
     <description lang="en">
-      Creates Sets and optimized video playlists from Personal collected Media.
+      Creates smart playlists from local/network media with AI-enhanced organization.
     </description>
     
     <news>
-      [B]v1.5.2[/B]
-      - New settings menu.
+      [B]v0.9.8b[/B] - Settings adjusted. Major Code Restructure:
+      [LIST]
+      [*] Removed all AI dependencies for stable base version
+      [*] Simplified settings structure (22→12 options)
+      [*] Fixed context menu download handling
+      [*] Improved error logging system
+      [*] Separated core/downloader/manager logic
+      [*] Added backup/restore functionality
+      [/LIST]
+      [B]Upcoming in v1.0[/B]:
+      [LIST]
+      [*] AI-powered metadata enhancement
+      [*] Smart playlist clustering
+      [/LIST]
     </news>
     
     <assets>
       <icon>resources/icon.png</icon>
       <fanart>resources/fanart.jpg</fanart>
-      <changelog>changelog.txt</changelog>
     </assets>
   </extension>
 </addon>
