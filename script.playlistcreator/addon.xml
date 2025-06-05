@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon 
-  id="script.playlistcreator" 
-  name="Playlist [COLOR gold]C[/COLOR]-reator Plus" 
-  version="0.9.8b" 
-  provider-name="Tha-[COLOR gold]G[/COLOR]-Thang">
-  
-  <requires>
-    <import addon="xbmc.python" version="3.0.0"/>
-    <import addon="script.module.mutagen" version="1.45.1"/>
-  </requires>
+<addon id="script.playlistcreator"
+       name="Playlist [COLOR gold]C[/COLOR]reator"
+       version="3.0.4a"
+       provider-name="Tha [COLOR gold]G[/COLOR] Thang">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+        <import addon="script.module.mutagen" version="1.47.0"/>
+    </requires>
+    <extension point="xbmc.python.script" library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">Lightweight Playlist Generator</summary>
+        <description lang="en">
+            Generates Video Playlists.
+            Specialized for diverse video collections, including non-standard media.
+            Features include:
+            - Folder and file scanning with various filtering options.
+            - Advanced sorting (alphabetical, newest, custom).
+            - Set management for reusable playlist configurations.
+            - AI-powered filename cleaning, content grouping, and metadata enhancement (requires NLTK data download).
+            - Context menu integration for direct playlist generation and stream saving/downloading.
+            - Customizable playlist output with metadata and color tags.
+        </description>
+        <platform>all</platform>
+        <assets>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.jpg</fanart>
+        </assets>
+        <news>
+            [3.0.4a]
+            - Critical fix: Add-on now launches correctly without crashing.
+            - Removed background service. Add-on now runs on demand.
+            [3.0.3a]
+            - Improved stability: Add-on settings now correctly reset after creating playlists or editing set settings, preventing unexpected changes.
+            - Enhanced settings management: Editing set-specific settings is now smoother, ensuring all settings load correctly and use smart defaults.
+            - General refinements for a better user experience in set management and playlist creation.
 
-  <extension point="xbmc.python.script" library="default.py">
-    <provides>executable</provides>
-  </extension>
-
-  <extension point="xbmc.addon.metadata">
-    <summary lang="en">Advanced playlist manager for Kodi</summary>
-    
-    <description lang="en">
-      Creates smart playlists from local/network media with AI-enhanced organization.
-    </description>
-    
-    <news>
-      [B]v0.9.8b[/B] - Settings adjusted. Major Code Restructure:
-      [LIST]
-      [*] Removed all AI dependencies for stable base version
-      [*] Simplified settings structure (22→12 options)
-      [*] Fixed context menu download handling
-      [*] Improved error logging system
-      [*] Separated core/downloader/manager logic
-      [*] Added backup/restore functionality
-      [/LIST]
-      [B]Upcoming in v1.0[/B]:
-      [LIST]
-      [*] AI-powered metadata enhancement
-      [*] Smart playlist clustering
-      [/LIST]
-    </news>
-    
-    <assets>
-      <icon>resources/icon.png</icon>
-      <fanart>resources/fanart.jpg</fanart>
-    </assets>
-  </extension>
+            [3.0.2]
+            - **New possibilities with AI:** AI features now start faster and use fewer resources by loading smart tools only when you need them.
+            - **Easier NLTK Data:** Simplified downloading of NLTK data (required for AI features) directly from add-on settings, ensuring it's always found.
+            - Overall improvements to AI integration for smarter filename cleaning and content grouping.
+        </news>
+    </extension>
 </addon>
