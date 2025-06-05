@@ -1,39 +1,125 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <settings>
     <category label="File Selection">
-        <setting id="file_extensions" type="text" label="Supported formats" default=".mp4,.mkv,.avi" help="Comma-separated video extensions"/>
-        <setting id="exclude_pattern" type="text" label="Exclude words" default="sample,test"/>
-        <setting id="recursive_scan" type="bool" label="Scan subfolders" default="true"/>
-        <setting id="limit_files_per_folder" type="bool" label="Limit files per folder in playlist" default="false"/>
-        <setting id="max_files_per_folder" type="number" label="Maximum files per folder" default="10" enable="eq(-1,true)"/>
-        <setting id="prioritize_new_files" type="bool" label="Show newest files first" default="true" enable="eq(-2,true)"/>
+        <setting id="file_extensions" type="text" label="Allowed Extensions" default=".mp4,.mkv,.avi,.webm,.mov,.wmv,.flv,.mpeg,.mpg,.3gp"/>
+        <setting id="recursive_scan" type="bool" label="Scan Subfolders" default="true"/>
+        <setting id="exclude_pattern" type="text" label="Exclude Words" default="sample"/>
+        
+        <setting id="max_files_per_folder" type="number" label="Max files per folder" default="20"/>
+        <setting id="max_files_total" type="number" label="Max files total (playlist)" default="200"/>
+        
+        <setting id="folder_sort_order" type="select" label="Folder sorting order" default="0">
+            <constraints>
+                <options>
+                    <option label="A-Z">0</option>
+                    <option label="Z-A">1</option>
+                    <option label="Custom Order">2</option>
+                </options>
+            </constraints>
+        </setting>
+        
+        <setting id="custom_folder_order" type="text" label="Custom folder order" default="" enable="eq(folder_sort_order,2)"/>
+        
+        <setting id="file_sort_order" type="select" label="File sorting order" default="0">
+            <constraints>
+                <options>
+                    <option label="Newest first">0</option>
+                    <option label="Oldest first">1</option>
+                    <option label="A-Z">2</option>
+                    <option label="Z-A">3</option>
+                    <option label="Random">4</option>
+                </options>
+            </constraints>
+        </setting>
+
+        <setting id="new_to_top" type="bool" label="Put newest files on top" default="false" enable="!eq(file_sort_order,0)"/>
+        <setting id="new_to_top_count" type="number" label="Number of newest files" default="5" enable="eq(new_to_top,true)"/>
+        
+        <setting id="min_file_size_mb" type="number" label="Minimum File Size (MB)" default="0"/>
+        <setting id="scan_timeout_seconds" type="number" label="Scan Timeout (seconds)" default="30"/>
+        <setting id="folder_depth_limit" type="number" label="Folder Scan Depth Limit" default="5"/>
+        <setting id="ignore_empty_folders" type="bool" label="Ignore Empty Folders" default="true"/>
+    </category>
+
+    <category label="Content Filtering">
+        <setting id="content_filter_mode" type="select" label="Content Filter Mode" default="0">
+            <constraints>
+                <options>
+                    <option label="Show All">0</option>
+                    <option label="Exclude Adult">1</option>
+                    <option label="Only Adult">2</option>
+                </options>
+            </constraints>
+        </setting>
+        <setting id="adult_content_keywords" type="text" label="Adult Content Keywords (comma separated)" default="adult,xxx,18plus" enable="!eq(content_filter_mode,0)"/>
     </category>
 
     <category label="Playlist Display">
-        <setting id="show_folder_names" type="bool" label="Show folder names in playlist" default="true"/>
-        <setting id="folder_name_color" type="enum" label="Folder name color" values="[COLOR blue]Blue[/COLOR]|[COLOR green]Green[/COLOR]|[COLOR black]Black[/COLOR]" default="blue" enable="eq(-1,true)"/>
-        <setting id="show_metadata" type="bool" label="Show metadata" default="true"/>
-        <setting id="metadata_template" type="text" label="Display format" default="{title} ({duration})" enable="eq(-1,true)"/>
+        <setting id="show_folder_names_in_playlist" type="bool" label="Show Folder Names in Playlist" default="true"/>
+        <setting id="playlist_folder_name_color" type="select" label="Folder Name Color" default="green" enable="eq(show_folder_names_in_playlist,true)">
+            <constraints>
+                <options>
+                    <option label="Green">green</option>
+                    <option label="Blue">blue</option>
+                    <option label="Red">red</option>
+                    <option label="Yellow">yellow</option>
+                </options>
+            </constraints>
+        </setting>
+        <setting id="playlist_folder_name_position" type="select" label="Folder Name Position" default="0" enable="eq(show_folder_names_in_playlist,true)">
+            <constraints>
+                <options>
+                    <option label="Before Filename">0</option>
+                    <option label="After Filename">1</option>
+                </options>
+            </constraints>
+        </setting>
+        
+        <setting id="show_metadata" type="bool" label="Show Metadata" default="true"/>
+        <setting id="metadata_display_mode" type="select" label="Metadata Display Mode" default="0" enable="eq(show_metadata,true)">
+            <constraints>
+                <options>
+                    <option label="Standard (size, date)">0</option>
+                    <option label="Custom Template">1</option>
+                </options>
+            </constraints>
+        </setting>
+        <setting id="metadata_template" type="text" label="Metadata Template" default="[{size}] {date}" enable="eq(metadata_display_mode,1)"/>
     </category>
 
     <category label="AI Features">
-        <setting id="enable_ai" type="bool" label="Enable AI Processing" default="false"/>
-        
-        <!-- Algemene AI cleaning -->
-        <setting id="ai_clean_filenames" type="bool" label="Smart filename cleaning" default="false" enable="eq(-1,true)"/>
-        
-        <!-- Geavanceerde AI (alleen zichtbaar als AI aan) -->
-        <setting id="ai_metadata_enhance" type="bool" label="Enhance metadata" default="false" enable="eq(-2,true)"/>
-        <setting id="ai_auto_tagging" type="bool" label="Auto-tag content" default="false" enable="eq(-3,true)"/>
+        <setting id="enable_ai" type="bool" label="Enable AI Features" default="false"/>
+        <setting id="ai_warning" type="action" label="Read AI Disclaimer" option="ai_disclaimer" enable="eq(enable_ai,true)"/>
+        <setting id="ai_title_cleaning" type="bool" label="AI Title Cleaning" default="true" enable="eq(enable_ai,true)"/>
+        <setting id="ai_content_grouping" type="bool" label="Content-Based Grouping" default="true" enable="eq(enable_ai,true)"/>
+        <setting id="ai_auto_tagging" type="bool" label="Automatic Tagging" default="true" enable="eq(enable_ai,true)"/>
+        <setting id="ai_metadata_enhance" type="bool" label="AI Metadata Enhancement" default="true" enable="eq(enable_ai,true)"/>
+        <setting id="nltk_download_action" type="action" label="Download NLTK Data" option="download_nltk_data" enable="eq(enable_ai,true)"/>
+        <setting id="nltk_data_status_display" type="text" label="NLTK Data Status" default="Niet geïnstalleerd" enable="false" visible="true"/>
+        <setting id="nltk_download_location_display" type="text" label="NLTK Download Locatie" default="Geen" enable="false" visible="true"/>
     </category>
 
-    <category label="Downloads">
-        <setting id="download_path" type="folder" label="Default download folder" default="special://downloads/"/>
-        <setting id="enable_auto_clean" type="bool" label="Auto-clean filenames" default="true"/>
-    </category>
-
-    <category label="Advanced" collapsed="true">
-        <setting id="debug_logging" type="bool" label="Debug mode" default="false"/>
-        <setting id="backup_playlists" type="bool" label="Backup playlists" default="true"/>
+    <category label="Advanced">
+        <setting id="show_context_menu_items" type="bool" label="Show Context Menu Items" default="true"/>
+        <setting id="progress_dialog_mode" type="select" label="Progress mode" default="0">
+            <constraints>
+                <options>
+                    <option label="Foreground">0</option>
+                    <option label="Background">1</option>
+                </options>
+            </constraints>
+        </setting>
+        <setting id="debug_logging" type="bool" label="Enable Debug Logging" default="false"/>
+        <setting id="log_level" type="select" label="Log Level" default="1" enable="eq(debug_logging,true)">
+            <constraints>
+                <options>
+                    <option label="DEBUG">0</option>
+                    <option label="INFO">1</option>
+                    <option label="WARNING">2</option>
+                    <option label="ERROR">3</option>
+                    <option label="FATAL">4</option>
+                </options>
+            </constraints>
+        </setting>
     </category>
 </settings>
