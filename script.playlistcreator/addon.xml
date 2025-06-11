@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.playlistcreator"
        name="Playlist [COLOR gold]C[/COLOR]reator"
-       version="3.0.4a"
+       version="1.6.2"
        provider-name="Tha [COLOR gold]G[/COLOR] Thang">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="script.module.mutagen" version="1.47.0"/>
     </requires>
+
     <extension point="xbmc.python.script" library="default.py">
         <provides>video</provides>
     </extension>
+
+    <extension point="kodi.context.item">
+        <context-item>
+            <label>Download Now Playing [COLOR darkblue]Video[/COLOR]</label>
+            <action>RunScript(script.playlistcreator, action=download_file, download_type=standard, path=$INFO[ListItem.Path])</action>
+            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path, .mp4|.mkv|.avi|.mov|.webm|.flv|.wmv|.mpg|.mpeg)</visible>
+        </context-item>
+        <context-item>
+            <label>Download Now Playing [COLOR darkblue]X[/COLOR]</label>
+            <action>RunScript(script.playlistcreator, action=download_file, download_type=adult, path=$INFO[ListItem.Path])</action>
+            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path, .mp4|.mkv|.avi|.mov|.webm|.flv|.wmv|.mpg|.mpeg)</visible>
+        </context-item>
+    </extension>
+
     <extension point="xbmc.addon.metadata">
         <summary lang="en">Lightweight Playlist Generator</summary>
         <description lang="en">
             Generates Video Playlists.
-            Specialized for diverse video collections, including non-standard media.
-            Features include:
-            - Folder and file scanning with various filtering options.
-            - Advanced sorting (alphabetical, newest, custom).
-            - Set management for reusable playlist configurations.
-            - AI-powered filename cleaning, content grouping, and metadata enhancement (requires NLTK data download).
-            - Context menu integration for direct playlist generation and stream saving/downloading.
-            - Customizable playlist output with metadata and color tags.
+            Specialized for 'Hard to Scrape' video collections.
         </description>
         <platform>all</platform>
         <assets>
@@ -29,18 +36,7 @@
             <fanart>resources/fanart.jpg</fanart>
         </assets>
         <news>
-            [3.0.4a]
-            - Critical fix: Add-on now launches correctly without crashing.
-            - Removed background service. Add-on now runs on demand.
-            [3.0.3a]
-            - Improved stability: Add-on settings now correctly reset after creating playlists or editing set settings, preventing unexpected changes.
-            - Enhanced settings management: Editing set-specific settings is now smoother, ensuring all settings load correctly and use smart defaults.
-            - General refinements for a better user experience in set management and playlist creation.
-
-            [3.0.2]
-            - **New possibilities with AI:** AI features now start faster and use fewer resources by loading smart tools only when you need them.
-            - **Easier NLTK Data:** Simplified downloading of NLTK data (required for AI features) directly from add-on settings, ensuring it's always found.
-            - Overall improvements to AI integration for smarter filename cleaning and content grouping.
+            <item>[B]1.6.2[/B]:  Cleaned Up (No AI Yet and Still Non-modulair)</item>
         </news>
     </extension>
 </addon>
