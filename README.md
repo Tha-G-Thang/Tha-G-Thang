@@ -1,24 +1,23 @@
-#Tha-G-Thang
-
 **Tha G👑 Thang**
+
 Gangsta Kodi-addons 
 with a G-Edge
 
 
-**Playlist C👑reator** 
-(in development)
+**Playlist C👑reator**
+
 Corning from the frustration of
 the personal collected content, 
 that is 'Hard to -Scrape' in Kodi.
 Our journey begins
 with tools for 
 sorting, 
-tagging and 
-displaying, creating playlists.
+tagging, displaying, creating playlists.
 Making the road clear 
 for AI to take over.
 
-**AI👑-Powered Vision** 
+**AI👑-Powered Vision**
+
 We envision a future where even the most chaotic collections 
 like:
 Family videos from the 2000s, 
@@ -34,8 +33,7 @@ This add-on is the first step in our commitment to get the pile doered Wow you w
 Kodi Addons, Reimagined 
 Enhancing your media reality.
 
-**Tha-G👑-Thang**
+**Tha G👑 Thang**
+![fanart](https://github.com/user-attachments/assets/e8e3133f-0bae-4606-a49c-8cec21bec72b)
 
-#Kodi, 
-Reimagined.
 ---
