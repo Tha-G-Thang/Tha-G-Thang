@@ -2,9 +2,9 @@
 <settings>
     <category label="File Selection">
         <setting id="file_extensions" type="text" label="Allowed Extensions" default=".mp4,.mkv,.avi,.mov,.wmv"/>
-        <setting id="exclude_pattern" type="text" label="Exclude Words (comma-separated)" default="sample,trailer"/>
-        <setting id="exclude_folders" type="text" label="Exclude Folder Names (comma-separated)" default=""/>
-        <setting id="min_file_size" type="number" label="Minimum File Size (MB)" default="50"/>
+        <setting id="exclude_pattern" type="text" label="Exclude Words (comma-separated)" default="sample"/>
+        <setting id="exclude_folders" type="text" label="Exclude Folder Names (comma-separated)" default="XTRA"/>
+        <setting id="min_file_size" type="number" label="Minimum File Size (MB)" default="1"/>
         <setting id="enable_max_size" type="bool" label="Enable Maximum File Size" default="false"/>
         <setting id="max_file_size" type="number" label="Maximum File Size (MB)" default="0">
             <dependency>
@@ -15,65 +15,74 @@
     </category>
 
     <category label="Sorting and Limiting">
-        <setting id="folder_sort_mode" type="select" label="Folder Sorting Order" default="0">
+        <setting id="folder_sort_order" type="select" label="Folder Sorting Order" default="0">
             <constraints>
                 <options>
                     <option label="None (Source Order)">0</option>
                     <option label="A-Z">1</option>
                     <option label="Z-A">2</option>
-                    <option label="Custom">3</option>
                 </options>
             </constraints>
         </setting>
-        <setting id="custom_folder_order" type="text" label="Custom Folder Order (comma-separated)" default="">
-            <dependency>
-                <enable condition="eq(folder_sort_mode,3)"/>
-            </dependency>
-        </setting>
-        <setting id="sort_mode" type="select" label="File Sorting Order" default="0">
+        <setting id="file_sort_order_within_folders" type="select" label="File Sorting Order (within folders)" default="0">
             <constraints>
                 <options>
-                    <option label="Newest First">0</option>
-                    <option label="A-Z">1</option>
-                    <option label="Z-A">2</option>
-                    <option label="Random">3</option>
-                    <option label="File Size (Smallest First)">4</option>
-                    <option label="File Size (Largest First)">5</option>
+                    <option label="None (Source Order)">0</option>
+                    <option label="Newest First">1</option>
+                    <option label="Oldest First">2</option>
+                    <option label="A-Z (Filename)">3</option>
+                    <option label="Z-A (Filename)">4</option>
+                    <option label="Duration (Longest First)">5</option>
                     <option label="Duration (Shortest First)">6</option>
-                    <option label="Duration (Longest First)">7</option>
                 </options>
             </constraints>
         </setting>
-        <setting id="newest_files" type="number" label="Number of Newest Files to Prioritize" default="0"/>
-        <setting id="limit_mode" type="select" label="File Limit Mode" default="0">
-            <constraints>
-                <options>
-                    <option label="Per Folder">0</option>
-                    <option label="Total (Playlist)">1</option>
-                </options>
-            </constraints>
-        </setting>
-        <setting id="file_count" type="number" label="Max Files Per Folder" default="20">
+        <setting id="new_to_top" type="bool" label="Newest files to top of playlist" default="false"/>
+        <setting id="new_to_top_count"
+                 type="number"
+                 label="Number of Newest (videos per folder) to top"
+                 default="2">
+            <validation>
+                <min>1</min>
+                <max>10</max>
+            </validation>
             <dependency>
-                <enable condition="eq(limit_mode,0)"/>
-            </dependency>
-        </setting>
-        <setting id="total_file_count" type="number" label="Max Files Total (Playlist)" default="100">
-            <dependency>
-                <enable condition="eq(limit_mode,1)"/>
+                <enable condition="eq(new_to_top,true)" />
             </dependency>
         </setting>
     </category>
 
-    <category label="Playlist Display">
-        <setting id="show_folder_names" type="bool" label="Show Folder Names in Playlist" default="true"/>
-        <setting id="show_metadata" type="bool" label="Show Metadata (Year, Resolution)" default="true"/>
-        <setting id="show_duration" type="bool" label="Show Duration in Playlist" default="true"/>
+    <category label="Playlist Display (Creation)">
+        <setting id="show_folder_names_in_playlist" type="bool" label="Show folder names (in playlist items)" default="true"/>
+        <setting id="playlist_folder_name_position" type="select" label="Folder name position" default="0">
+            <constraints>
+                <options>
+                    <option label="Prefix">0</option>
+                    <option label="Suffix">1</option>
+                </options>
+            </constraints>
+            <dependency>
+                <enable condition="eq(show_folder_names_in_playlist,true)" />
+            </dependency>
+        </setting>
+        <setting id="favorites_playlist_name" type="text" label="Favorites Playlist Name" default="My Favorites"/>
+        <setting id="show_metadata" type="bool" label="Show metadata (year, resolution, duration)" default="true"/>
+        <setting id="show_duration" type="bool" label="Show duration in display name" default="true">
+            <dependency>
+                <enable condition="eq(show_metadata,true)"/>
+            </dependency>
+        </setting>
     </category>
 
     <category label="Scheduled Updates">
-        <setting id="enable_timer" type="bool" label="Enable Scheduled Updates" default="false"/>
-        <setting id="update_interval" type="select" label="Update Interval" default="1">
+        <setting id="auto_update" type="bool" label="Enable Scheduled Updates" default="false"/>
+        <setting id="pause_during_playback" type="bool" label="Pause during playback" default="true">
+             <dependency><enable condition="eq(auto_update,true)"/></dependency>
+        </setting>
+        <setting id="update_interval" type="select" label="Update Interval" default="0">
+            <dependency>
+                <enable condition="eq(auto_update,true)"/>
+            </dependency>
             <constraints>
                 <options>
                     <option label="Hourly">0</option>
@@ -88,7 +97,6 @@
             </dependency>
         </setting>
         <setting id="last_update" type="text" label="Last Update Time" default="Never" visible="false"/>
-        <setting id="auto_update" type="bool" label="Update All Sets on Addon Start" default="false"/>
     </category>
 
     <category label="Backups">
@@ -100,6 +108,27 @@
         <setting id="download_path" type="folder" label="Default Download Path" default=""/>
         <setting id="download_path_adult" type="folder" label="Adult Content Download Path" default=""/>
         <setting id="enable_auto_clean" type="bool" label="Auto-clean filenames on download" default="true"/>
+
+        <setting id="stream_sets_location_type" type="select" label="Stream Set Opslaglocatie" default="0">
+            <constraints>
+                <options>
+                    <option label="Addon Profielmap">0</option>
+                    <option label="Binnen Standaard Downloadmap (/Streams/)">1</option>
+                    <option label="Binnen Adult Downloadmap (/Streams/)">2</option>
+                    <option label="Aangepaste Map">3</option>
+                </options>
+            </constraints>
+        </setting>
+        <setting id="custom_stream_sets_path" type="folder" label="Aangepaste Stream Set Map" default="">
+            <dependency>
+                <visible condition="eq(stream_sets_location_type,3)"/>
+            </dependency>
+        </setting>
+    </category>
+
+    <category label="AI &amp; Tagging (Future)">
+        <setting id="enable_ai_tagging" type="bool" label="Enable AI-based Tagging" default="false"/>
+        <setting id="ai_model_path" type="folder" label="AI Model Path (optional)" default=""/>
     </category>
 
     <category label="Advanced">
