@@ -1,93 +1,83 @@
-import xbmcvfs
-import xbmcgui
 import xbmc
-import os 
-# Importeer van base_utils en utils
-from resources.lib.core.base_utils import log, get_setting, get_bool_setting, ADDON
-from resources.lib.utils import clean_filename # clean_filename is nu in utils.py
+import xbmcgui
+import xbmcvfs
+import os
+import urllib.parse
+from resources.lib.core.base_utils import log, get_setting, clean_display_name # Importeer benodigde functies
+import re
 
-class Downloader:
-    def __init__(self):
-        pass
+def clean_filename(filename):
+    """ Cleans a filename by removing illegal characters for file systems. """
+    # Remove characters that are illegal in Windows, macOS, and Linux filenames
+    cleaned_filename = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', filename)
+    # Replace common illegal characters with a safe alternative (e.g., underscore)
+    cleaned_filename = cleaned_filename.replace(' ', '_')
+    cleaned_filename = cleaned_filename.replace("'", "")
+    cleaned_filename = cleaned_filename.replace("&", "and")
+    # Limit length to avoid issues with some file systems (e.g., 255 chars)
+    cleaned_filename = cleaned_filename[:200] # Arbitrary limit, adjust as needed
+    return cleaned_filename
 
-    def download_file(self, url, is_adult_content=False):
-        """
-        Generieke downloadmethode voor alle use-cases.
-        Args:
-            url (str): Bron-URL.
-            is_adult_content (bool): Gebruik adult-downloadmap indien True.
-        Returns:
-            bool: True bij succes, False bij falen.
-        """
-        try:
-            filename = self._extract_filename(url)
-            cleaned_name = clean_filename(filename) # Gebruikt de clean_filename uit utils
-            target_path = self._get_target_path(cleaned_name, is_adult_content)
-            
-            log(f"Download gestart: {url} -> {target_path}")
+def download_file(path, download_type='standard'):
+    log(f"Attempting to download: {path} (type: {download_type})", xbmc.LOGINFO)
 
-            if url.startswith("plugin://"):
-                xbmcgui.Dialog().notification(
-                    ADDON.getAddonInfo('name'), 
-                    "Plugin URLs kunnen niet direct gedownload worden.", 
-                    xbmcgui.NOTIFICATION_INFO, 5000
-                )
-                log(f"Poging tot downloaden van plugin URL: {url} (niet ondersteund)", xbmc.LOGWARNING)
-                return False
-            
-            if xbmcvfs.copy(url, target_path):
-                xbmcgui.Dialog().notification(
-                    ADDON.getAddonInfo('name'), 
-                    f"'{os.path.basename(target_path)}' gedownload!", 
-                    xbmcgui.NOTIFICATION_INFO, 5000
-                )
-                log(f"Bestand succesvol gedownload naar: {target_path}", xbmc.LOGINFO)
-                return True
-            else:
-                xbmcgui.Dialog().notification(
-                    ADDON.getAddonInfo('name'), 
-                    f"Download mislukt: '{os.path.basename(target_path)}'", 
-                    xbmcgui.NOTIFICATION_ERROR, 5000
-                )
-                log(f"Mislukt om '{url}' te downloaden naar '{target_path}'", xbmc.LOGERROR)
-                return False
-        except Exception as e:
-            xbmcgui.Dialog().notification(
-                ADDON.getAddonInfo('name'), 
-                f"Onverwachte downloadfout: {str(e)}", 
-                xbmcgui.NOTIFICATION_ERROR, 5000
-            )
-            log(f"Onverwachte fout in Downloader.download_file: {str(e)}", xbmc.LOGERROR)
-            return False
+    if not path:
+        xbmcgui.Dialog().ok("Download Fout", "Geen bestandspad opgegeven voor download.")
+        return
 
-    def _extract_filename(self, url):
-        """
-        Extraheert een bestandsnaam uit een URL of genereert anders een generieke naam
-        """
-        filename = url.split('/')[-1].split('?')[0]
-        if not filename:
-            filename = "downloaded_file.mp4" # Fallback naam
-        return filename
+    # Determine destination folder based on download_type
+    if download_type == 'adult':
+        download_path_setting = get_setting('download_path_adult')
+    else:
+        download_path_setting = get_setting('download_path')
 
-    def _get_target_path(self, filename, is_adult_content):
-        """
-        Bepaalt het volledige doelpad op basis van de instellingen.
-        """
-        if is_adult_content:
-            base_path_setting_id = "download_path_adult"
-            default_path = "special://downloads/Adult/"
-        else:
-            base_path_setting_id = "download_path"
-            default_path = "special://downloads/"
+    if not download_path_setting:
+        xbmcgui.Dialog().ok("Download Fout", "Geen downloadmap ingesteld in de addon instellingen.")
+        return
+
+    # Ensure the destination directory exists
+    if not xbmcvfs.exists(download_path_setting):
+        xbmcvfs.mkdirs(download_path_setting)
+        if not xbmcvfs.exists(download_path_setting): # Check again if creation was successful
+            xbmcgui.Dialog().ok("Download Fout", f"Kon downloadmap niet aanmaken: {download_path_setting}")
+            return
+
+    original_filename = os.path.basename(urllib.parse.unquote(path))
+    
+    # Auto-clean filename if setting is enabled
+    if get_setting('enable_auto_clean', 'true') == 'true':
+        filename_without_ext, file_ext = os.path.splitext(original_filename)
+        cleaned_filename_without_ext = clean_filename(filename_without_ext)
+        target_filename = f"{cleaned_filename_without_ext}{file_ext}"
+    else:
+        target_filename = original_filename
         
-        base_path = get_setting(base_path_setting_id, default_path)
+    destination_path = xbmcvfs.translatePath(os.path.join(download_path_setting, target_filename))
+
+    if xbmcvfs.exists(destination_path):
+        if not xbmcgui.Dialog().yesno("Bestand Bestaat Al", f"'{target_filename}' bestaat al. Overschrijven?"):
+            xbmcgui.Dialog().notification("Download Geannuleerd", "Download geannuleerd.", xbmcgui.NOTIFICATION_INFO, 2000)
+            log(f"Download of {path} cancelled: file already exists.", xbmc.LOGINFO)
+            return
+
+    dialog = xbmcgui.DialogProgress()
+    dialog.create("Bestand Downloaden", "Bezig met downloaden...")
+
+    try:
+        # xbmcvfs.copy does not provide progress, so we use a dummy progress for UX
+        log(f"Starting download from '{path}' to '{destination_path}'", xbmc.LOGINFO)
+        xbmcvfs.copy(path, destination_path)
         
-        base_path = xbmcvfs.translatePath(base_path)
-        if not base_path.endswith(os.sep):
-            base_path += os.sep
-            
-        if not xbmcvfs.exists(base_path):
-            xbmcvfs.mkdirs(base_path)
-            log(f"Download directory '{base_path}' aangemaakt.", xbmc.LOGINFO)
-            
-        return os.path.join(base_path, filename)
+        # Simulate progress for better UX as xbmcvfs.copy is blocking
+        for i in range(101):
+            dialog.update(i, "Downloaden...", f"{i}% voltooid")
+            time.sleep(0.01) # Small delay to show progress
+        
+        dialog.close()
+        xbmcgui.Dialog().notification("Download Voltooid", f"'{target_filename}' gedownload.", xbmcgui.NOTIFICATION_INFO, 2000)
+        log(f"Successfully downloaded: {path} to {destination_path}", xbmc.LOGINFO)
+
+    except Exception as e:
+        dialog.close()
+        xbmcgui.Dialog().ok("Download Fout", f"Fout bij downloaden van '{target_filename}': {e}")
+        log(f"Error downloading {path}: {e}", xbmc.LOGERROR)

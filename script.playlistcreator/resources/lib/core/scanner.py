@@ -1,114 +1,50 @@
-import os
 import xbmcvfs
-import time
-import xbmc
-import re
-from resources.lib.core.base_utils import get_setting, get_bool_setting, log
+import os
+from resources.lib.core.base_utils import log, get_setting # Importeer benodigde functies
 
-class Scanner:
-    def scan(self, folder_path):
-        min_size_mb = int(get_setting('min_file_size_mb', '0'))
-        min_size_bytes = min_size_mb * 1024 * 1024
-        timeout = int(get_setting('scan_timeout_seconds', '30'))
-        recursive_scan = get_bool_setting('recursive_scan') # Lees de instelling
-        folder_depth_limit = int(get_setting('folder_depth_limit', '5')) # Lees de dieptelimiet
+def get_media_files(folder, depth=0, max_depth=8):
+    file_extensions = [ext.strip().lower() for ext in get_setting('file_extensions', '.mp4,.mkv,.avi,.mov,.wmv').split(',')]
+    exclude_patterns = [p.strip().lower() for p in get_setting('exclude_pattern', 'sample').split(',')]
+    exclude_folders = [f.strip().lower() for f in get_setting('exclude_folders', 'XTRA').split(',')]
+    min_file_size = int(get_setting('min_file_size', '1')) * 1024 * 1024 # MB to bytes
+    enable_max_size = get_setting('enable_max_size', 'false') == 'true'
+    max_file_size = int(get_setting('max_file_size', '0')) * 1024 * 1024 if enable_max_size else 0
 
-        content_filter_mode = get_setting('content_filter_mode', 'all')
-        adult_keywords_str = get_setting('adult_content_keywords', 'adult,xxx,18plus')
-        adult_keywords = [k.strip().lower() for k in adult_keywords_str.split(',') if k.strip()]
+    log(f"Scanning folder: {folder} at depth {depth}")
+    files = []
+    dirs, contents = xbmcvfs.listdir(folder)
+    
+    # Filter out system/hidden files like '.DS_Store'
+    contents = [c for c in contents if not c.startswith('.')]
 
-        start_time = time.time()
-        files = []
-
-        log(f"SCANNER: Starten van scan voor map: '{folder_path}' (Recursief: {recursive_scan}, Diepte: {folder_depth_limit})", xbmc.LOGINFO)
-        
-        # ACTIVEER de _scan_recursive functie en verwijder de tijdelijke debug-regel
-        all_files = self._scan_recursive(folder_path, 0, recursive_scan, folder_depth_limit)
-
-        for f in all_files:
-            if time.time() - start_time > timeout:
-                log(f"Scan van '{folder_path}' getimed out na {timeout} seconden.", xbmc.LOGWARNING)
-                xbmcgui.Dialog().notification(ADDON.getAddonInfo('name'), "Scan getimed out, mogelijk niet alle bestanden gevonden.", xbmcgui.NOTIFICATION_WARNING, 5000)
-                break # Stop met verwerken als timeout is bereikt
-
-            file_size = 0
-            try:
-                if xbmcvfs.exists(f):
-                    file_size = xbmcvfs.Stat(f).st_size()
-            except Exception as e:
-                log(f"Fout bij ophalen bestandsgrootte voor '{f}': {str(e)}", xbmc.LOGWARNING)
-                continue # Sla dit bestand over
-
-            if file_size < min_size_bytes:
-                log(f"SCANNER_DEBUG: '{f}' overgeslagen (te klein: {file_size} bytes)", xbmc.LOGDEBUG)
-                continue
-
-            if content_filter_mode == 'adult' and not self._is_adult_content(f, adult_keywords):
-                log(f"SCANNER_DEBUG: '{f}' overgeslagen (geen volwassen inhoud, filter actief)", xbmc.LOGDEBUG)
-                continue
-            elif content_filter_mode == 'non_adult' and self._is_adult_content(f, adult_keywords):
-                log(f"SCANNER_DEBUG: '{f}' overgeslagen (volwassen inhoud, filter actief)", xbmc.LOGDEBUG)
-                continue
+    for item in contents:
+        full_path = xbmcvfs.translatePath(os.path.join(folder, item))
+        if xbmcvfs.File(full_path).exists() and not xbmcvfs.validatePath(full_path):
+            log(f"Invalid path encountered, skipping: {full_path}", xbmc.LOGWARNING)
+            continue
             
-            files.append(f)
-            log(f"SCANNER_DEBUG: Bestand gevonden en toegevoegd: '{f}'", xbmc.LOGDEBUG)
+        if xbmcvfs.isdir(full_path):
+            folder_name = os.path.basename(full_path).lower()
+            if folder_name in exclude_folders:
+                log(f"Excluding folder: {full_path}", xbmc.LOGINFO)
+                continue
+            if get_setting('recursive_scan', 'true') == 'true' and depth < max_depth:
+                files.extend(get_media_files(full_path, depth + 1, max_depth))
+        else:
+            filename, file_extension = os.path.splitext(item)
+            file_extension = file_extension.lower()
 
-        log(f"Scan van '{folder_path}' voltooid. Totaal {len(files)} bestanden gevonden die aan criteria voldoen.", xbmc.LOGINFO)
-        return files
+            if file_extension not in file_extensions:
+                continue
 
-    def _scan_recursive(self, folder, current_depth, recursive_scan_enabled, depth_limit):
-        """
-        Recursief scan van mappen voor ondersteunde mediabestanden.
-        """
-        all_found_files = []
-        supported_extensions = [ext.strip().lower() for ext in get_setting('file_extensions', '').split(',') if ext.strip()]
-        
-        log(f"SCANNER_DEBUG: Start recursieve scan in '{folder}' (diepte: {current_depth}, limiet: {depth_limit})", xbmc.LOGDEBUG)
+            file_size = xbmcvfs.File(full_path).size()
+            if file_size < min_file_size:
+                continue
+            if enable_max_size and max_file_size > 0 and file_size > max_file_size:
+                continue
 
-        try:
-            # Lijst van bestanden en mappen in de huidige directory
-            contents = xbmcvfs.listdir(folder)
-            files = contents[0] # Bestanden
-            dirs = contents[1]  # Mappen
+            if any(p in filename.lower() for p in exclude_patterns):
+                continue
 
-            for f in files:
-                full_path = os.path.join(folder, f)
-                # Controleer extensie
-                if os.path.splitext(f)[1].lower() in supported_extensions:
-                    all_found_files.append(full_path)
-                    log(f"SCANNER_DEBUG: Bestand '{full_path}' toegevoegd.", xbmc.LOGDEBUG)
-
-            # Recursief scannen van submappen
-            if recursive_scan_enabled and current_depth < depth_limit:
-                for d in dirs:
-                    full_subdir_path = os.path.join(folder, d)
-                    if xbmcvfs.isdir(full_subdir_path): # Controleer expliciet of het een map is
-                        all_found_files.extend(self._scan_recursive(full_subdir_path, current_depth + 1, recursive_scan_enabled, depth_limit))
-                    else:
-                        log(f"SCANNER_DEBUG: '{full_subdir_path}' is geen map, overslaan voor recursieve scan.", xbmc.LOGDEBUG)
-            elif recursive_scan_enabled and current_depth >= depth_limit:
-                 log(f"SCANNER_DEBUG: Maximale diepte bereikt voor '{folder}' (diepte {current_depth}).", xbmc.LOGDEBUG)
-            elif not recursive_scan_enabled:
-                 log(f"SCANNER_DEBUG: Recursieve scan uitgeschakeld voor '{folder}'.", xbmc.LOGDEBUG)
-                 
-        except Exception as e:
-            log(f"SCANNER_DEBUG: Fout in recursieve scan in map '{folder}': {str(e)}", xbmc.LOGERROR)
-            
-        return all_found_files
-
-    # --- OUDE LOGICA VERWIJDERD ---
-    # De _scan_old_logic methode en de commentaarblokken hieromtrent zijn verwijderd.
-
-    def _is_adult_content(self, file_path, adult_keywords):
-        full_path_lower = file_path.lower()
-        for keyword in adult_keywords:
-            if re.search(r'\b' + re.escape(keyword) + r'\b', full_path_lower):
-                log(f"SCANNER_DEBUG: Gedetecteerde volwassen inhoud: '{file_path}' (via keyword '{keyword}')", xbmc.LOGDEBUG)
-                return True
-        
-        folder_name = os.path.basename(os.path.dirname(file_path)).lower()
-        for keyword in adult_keywords:
-            if re.search(r'\b' + re.escape(keyword) + r'\b', folder_name):
-                log(f"SCANNER_DEBUG: Gedetecteerde volwassen inhoud in mapnaam: '{folder_name}' (via keyword '{keyword}')", xbmc.LOGDEBUG)
-                return True
-        return False
+            files.append(full_path)
+    return files

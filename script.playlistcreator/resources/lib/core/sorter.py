@@ -1,92 +1,64 @@
 import os
+import urllib.parse
+from resources.lib.core.base_utils import get_setting, log, get_file_duration
 import xbmc
-import stat # Nodig voor os.stat om m_time te krijgen
+import xbmcvfs # Nodig voor mtime
 
-from resources.lib.core.base_utils import get_setting, get_bool_setting, get_int_setting, log
+def get_folder_sort_key(folder_path):
+    # This function is used to sort folders based on custom settings.
+    # It assumes the folder name is the last part of the path.
+    folder_name = os.path.basename(urllib.parse.unquote(folder_path)).lower()
+    return folder_name
 
-# Probeer de AISorter te importeren, vang de ImportError op als de module niet beschikbaar is.
-# Dit zorgt ervoor dat de add-on niet crasht als AI niet is geconfigureerd of geïnstalleerd.
-_ai_sorter_instance = None
-if get_bool_setting("enable_ai") and get_bool_setting("ai_content_grouping"):
-    try:
-        from resources.lib.core.ai.ai_sorter import AISorter
-        _ai_sorter_instance = AISorter()
-        log("AISorter instance succesvol geladen in sorter.py.", xbmc.LOGDEBUG)
-    except ImportError as e:
-        log(f"AISorter module niet gevonden: {e}. Content-Based sorting zal niet beschikbaar zijn.", xbmc.LOGWARNING)
-        _ai_sorter_instance = None
-    except Exception as e:
-        log(f"Fout bij laden/initialiseren van AISorter: {str(e)}. Content-Based sorting zal niet beschikbaar zijn.", xbmc.LOGERROR)
-else:
-    log("AI Content Grouping of algemene AI is uitgeschakeld. AISorter zal niet worden gebruikt.", xbmc.LOGINFO)
+def sort_files_for_playlist(files):
+    """
+    Applies sorting and 'new_to_top' logic to a list of file paths.
+    This function processes files *within* a folder or a concatenated list if no folder sorting is applied beforehand.
+    """
+    file_sort_order = get_setting('file_sort_order_within_folders', '0') # 0: None, 1: Newest First, 2: Oldest First, 3: A-Z, 4: Z-A, 5: Duration Longest, 6: Duration Shortest
+    
+    # 1. Pas de primaire bestandssortering toe
+    if file_sort_order == '1': # Newest First (gebaseerd op modificatietijd)
+        log("Applying file sort: Newest First.", xbmc.LOGINFO)
+        files.sort(key=lambda x: xbmcvfs.File(x).mtime() if xbmcvfs.exists(x) else 0, reverse=True)
+    elif file_sort_order == '2': # Oldest First (gebaseerd op modificatietijd)
+        log("Applying file sort: Oldest First.", xbmc.LOGINFO)
+        files.sort(key=lambda x: xbmcvfs.File(x).mtime() if xbmcvfs.exists(x) else 0)
+    elif file_sort_order == '3': # A-Z (Filename)
+        log("Applying file sort: A-Z (Filename).", xbmc.LOGINFO)
+        files.sort(key=lambda x: os.path.basename(x).lower())
+    elif file_sort_order == '4': # Z-A (Filename)
+        log("Applying file sort: Z-A (Filename).", xbmc.LOGINFO)
+        files.sort(key=lambda x: os.path.basename(x).lower(), reverse=True)
+    elif file_sort_order == '5': # Duration (Longest First)
+        log("Applying file sort: Duration (Longest First).", xbmc.LOGINFO)
+        try:
+            files.sort(key=get_file_duration, reverse=True)
+        except Exception as e:
+            log(f"Error applying duration sort: {e}", xbmc.LOGERROR)
+    elif file_sort_order == '6': # Duration (Shortest First)
+        log("Applying file sort: Duration (Shortest First).", xbmc.LOGINFO)
+        try:
+            files.sort(key=get_file_duration)
+        except Exception as e:
+            log(f"Error applying duration sort: {e}", xbmc.LOGERROR)
+    # Als file_sort_order == '0' (None), blijft de volgorde zoals hij is (vaak filesystem-order)
 
-class Sorter:
-    def __init__(self):
-        pass
+    # 2. Pas 'Newest to Top' logica toe, indien ingeschakeld
+    new_to_top_enabled = get_setting('new_to_top', 'false') == 'true'
+    if new_to_top_enabled:
+        new_to_top_count = int(get_setting('new_to_top_count', '2'))
+        if new_to_top_count > 0:
+            log(f"Applying 'Newest {new_to_top_count} to Top' logic.", xbmc.LOGINFO)
+            
+            # Sorteer de bestanden op modificatietijd om de 'nieuwste' te vinden
+            temp_files_sorted_by_mtime = sorted(files, key=lambda x: xbmcvfs.File(x).mtime() if xbmcvfs.exists(x) else 0, reverse=True)
+            
+            newest_files = temp_files_sorted_by_mtime[:new_to_top_count]
+            remaining_files = [f for f in files if f not in newest_files] # Behoud originele volgorde voor de rest
 
-    def sort(self, file_list):
-        """
-        Sorteert een lijst van bestanden op basis van de gebruiker-gedefinieerde instellingen.
-        """
-        log(f"Sorter: Starten met sorteren van {len(file_list)} bestanden.", xbmc.LOGDEBUG)
+            # Combineer: nieuwste bestanden bovenaan, gevolgd door de rest
+            files = newest_files + remaining_files
+            log(f"Newest {len(newest_files)} files moved to top.", xbmc.LOGINFO)
 
-        file_sort_mode = get_setting("file_sort_order", "0")
-        
-        # AI-gebaseerde sortering
-        if file_sort_mode == "3" and _ai_sorter_instance: # "Content-Based"
-            log("Sorter: Bestanden sorteren op inhoud (AI-gebaseerd).", xbmc.LOGDEBUG)
-            try:
-                # AISorter verwacht een lijst van file_paths
-                sorted_files = _ai_sorter_instance.sort_by_content(file_list)
-                return sorted_files
-            except Exception as e:
-                log(f"Fout bij AI-gebaseerde sortering: {str(e)}. Terugval op 'Meest recent eerst'.", xbmc.LOGERROR)
-                file_sort_mode = "0" # Terugval naar standaard sortering
-                
-        # Standaard sortering
-        if file_sort_mode == "0": # Meest recent eerst (Newest first)
-            log("Sorter: Bestanden sorteren op meest recent eerst.", xbmc.LOGDEBUG)
-            # Sorteren op aanpassingsdatum (m_time) in aflopende volgorde
-            return sorted(file_list, key=lambda f: os.stat(f).st_mtime, reverse=True)
-        elif file_sort_mode == "1": # Oudste eerst (Oldest first)
-            log("Sorter: Bestanden sorteren op oudste eerst.", xbmc.LOGDEBUG)
-            # Sorteren op aanpassingsdatum (m_time) in oplopende volgorde
-            return sorted(file_list, key=lambda f: os.stat(f).st_mtime)
-        elif file_sort_mode == "2": # Alfabetisch (A-Z)
-            log("Sorter: Bestanden alfabetisch (A-Z) sorteren.", xbmc.LOGDEBUG)
-            # Sorteren op bestandsnaam (lowercase voor case-insensitieve sortering)
-            return sorted(file_list, key=lambda f: os.path.basename(f).lower())
-        else: # Fallback: Meest recent eerst
-            log(f"Sorter: Onbekende bestands-sorteermodus '{file_sort_mode}'. Terugval op 'Meest recent eerst'.", xbmc.LOGWARNING)
-            return sorted(file_list, key=lambda f: os.stat(f).st_mtime, reverse=True)
-
-    def sort_folders(self, folders):
-        """
-        Sorteert een lijst van mappen op basis van de gebruiker-gedefinieerde instellingen.
-        """
-        log(f"Sorter: Starten met sorteren van {len(folders)} mappen.", xbmc.LOGDEBUG)
-
-        folder_sort_mode = get_setting("folder_sort_order", "0") # Default A-Z
-
-        if folder_sort_mode == "0": # A-Z
-            log("Sorter: Mappen alfabetisch (A-Z) sorteren.", xbmc.LOGDEBUG)
-            return sorted(folders, key=lambda x: os.path.basename(x).lower())
-        elif folder_sort_mode == "1": # Z-A
-            log("Sorter: Mappen alfabetisch (Z-A) sorteren.", xbmc.LOGDEBUG)
-            return sorted(folders, key=lambda x: os.path.basename(x).lower(), reverse=True)
-        elif folder_sort_mode == "2": # Custom Order
-            log("Sorter: Mappen sorteren op aangepaste volgorde.", xbmc.LOGDEBUG)
-            custom_order_str = get_setting("custom_folder_order", "")
-            if custom_order_str:
-                custom_order_list = [f.strip().lower() for f in custom_order_str.split(',') if f.strip()]
-                # Sorteer eerst op aanwezigheid in de custom order, dan op de index, dan alfabetisch voor de rest
-                return sorted(folders, key=lambda x: (
-                    custom_order_list.index(os.path.basename(x).lower()) if os.path.basename(x).lower() in custom_order_list else len(custom_order_list),
-                    os.path.basename(x).lower()
-                ))
-            else:
-                log("Custom folder order requested but setting 'custom_folder_order' is empty. Falling back to A-Z.", xbmc.LOGWARNING)
-                return sorted(folders, key=lambda x: os.path.basename(x).lower())
-        else: # Fallback naar A-Z
-            log(f"Sorter: Onbekende mappen-sorteermodus '{folder_sort_mode}'. Terugval op A-Z.", xbmc.LOGWARNING)
-            return sorted(folders, key=lambda x: os.path.basename(x).lower())
+    return files
