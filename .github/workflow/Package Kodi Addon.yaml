@@ -1,35 +1,42 @@
-name: Package Kodi Addon
+name: Zip and Release Playlist Creator on Tag
 
 on:
   push:
     tags:
-      - 'v*'
-    paths:
-      - 'script.playlistcreator/**'
+      - '*' # triggers on any tag
 
 jobs:
-  build-and-release:
+  zip_and_release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set addon version from addon.xml
-        id: addon_version
-        run: |
-          VERSION=$(grep -oP 'version="\K[0-9\.]+' script.playlistcreator/addon.xml | head -1)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Get tag name
+        id: get_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Zip addon folder
+      - name: Create ZIP archive of playlistcreator
         run: |
-          cd script.playlistcreator/..
-          zip -r script.playlistcreator-${{ env.VERSION }}.zip script.playlistcreator
+          cd script.playlistcreator
+          zip -r ../playlistcreator-${TAG_NAME}.zip .
 
-      - name: Create Release
+      - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: script.playlistcreator v${{ env.VERSION }}
-          files: script.playlistcreator-${{ env.VERSION }}.zip
+          tag_name: ${{ env.TAG_NAME }}
+          name: Playlist Creator ${{ env.TAG_NAME }}
+          body: |
+            Automated release of script.playlistcreator for version ${{ env.TAG_NAME }}.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload ZIP to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          files: playlistcreator-${{ env.TAG_NAME }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
