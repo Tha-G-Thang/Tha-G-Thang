@@ -1,7 +1,7 @@
+import xbmc
 import xbmcvfs
 import os
 from resources.lib.core.base_utils import log, get_setting
-import xbmc
 
 def get_media_files(folder, depth=0, max_depth=8):
     file_extensions = [ext.strip().lower() for ext in get_setting('file_extensions', '.mp4,.mkv,.avi,.mov,.wmv').split(',')]
