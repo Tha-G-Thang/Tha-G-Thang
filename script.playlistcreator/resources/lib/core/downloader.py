@@ -3,19 +3,17 @@ import xbmcgui
 import xbmcvfs
 import os
 import urllib.parse
-from resources.lib.core.base_utils import log, get_setting, clean_display_name # Importeer benodigde functies
+from resources.lib.core.base_utils import log, get_setting, clean_display_name
 import re
+import time
 
 def clean_filename(filename):
     """ Cleans a filename by removing illegal characters for file systems. """
-    # Remove characters that are illegal in Windows, macOS, and Linux filenames
     cleaned_filename = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', filename)
-    # Replace common illegal characters with a safe alternative (e.g., underscore)
     cleaned_filename = cleaned_filename.replace(' ', '_')
     cleaned_filename = cleaned_filename.replace("'", "")
     cleaned_filename = cleaned_filename.replace("&", "and")
-    # Limit length to avoid issues with some file systems (e.g., 255 chars)
-    cleaned_filename = cleaned_filename[:200] # Arbitrary limit, adjust as needed
+    cleaned_filename = cleaned_filename[:200]
     return cleaned_filename
 
 def download_file(path, download_type='standard'):
@@ -25,32 +23,26 @@ def download_file(path, download_type='standard'):
         xbmcgui.Dialog().ok("Download Fout", "Geen bestandspad opgegeven voor download.")
         return
 
-    # Determine destination folder based on download_type
     if download_type == 'adult':
         download_path_setting = get_setting('download_path_adult')
     else:
         download_path_setting = get_setting('download_path')
 
     if not download_path_setting:
-        xbmcgui.Dialog().ok("Download Fout", "Geen downloadmap ingesteld in de addon instellingen.")
+        xbmcgui.Dialog().ok("Download Fout", "Geen downloadpad ingesteld in de addon instellingen.")
         return
 
-    # Ensure the destination directory exists
     if not xbmcvfs.exists(download_path_setting):
         xbmcvfs.mkdirs(download_path_setting)
-        if not xbmcvfs.exists(download_path_setting): # Check again if creation was successful
-            xbmcgui.Dialog().ok("Download Fout", f"Kon downloadmap niet aanmaken: {download_path_setting}")
-            return
+        log(f"Created download directory: {download_path_setting}", xbmc.LOGINFO)
 
-    original_filename = os.path.basename(urllib.parse.unquote(path))
-    
-    # Auto-clean filename if setting is enabled
+    original_filename = os.path.basename(urllib.parse.urlparse(path).path)
     if get_setting('enable_auto_clean', 'true') == 'true':
-        filename_without_ext, file_ext = os.path.splitext(original_filename)
-        cleaned_filename_without_ext = clean_filename(filename_without_ext)
-        target_filename = f"{cleaned_filename_without_ext}{file_ext}"
+        target_filename = clean_filename(original_filename)
+        log(f"Cleaned filename from '{original_filename}' to '{target_filename}'", xbmc.LOGINFO)
     else:
         target_filename = original_filename
+        log(f"Auto-clean filenames is disabled. Using original filename: {original_filename}", xbmc.LOGINFO)
         
     destination_path = xbmcvfs.translatePath(os.path.join(download_path_setting, target_filename))
 
@@ -64,14 +56,12 @@ def download_file(path, download_type='standard'):
     dialog.create("Bestand Downloaden", "Bezig met downloaden...")
 
     try:
-        # xbmcvfs.copy does not provide progress, so we use a dummy progress for UX
         log(f"Starting download from '{path}' to '{destination_path}'", xbmc.LOGINFO)
         xbmcvfs.copy(path, destination_path)
         
-        # Simulate progress for better UX as xbmcvfs.copy is blocking
         for i in range(101):
             dialog.update(i, "Downloaden...", f"{i}% voltooid")
-            time.sleep(0.01) # Small delay to show progress
+            time.sleep(0.01)
         
         dialog.close()
         xbmcgui.Dialog().notification("Download Voltooid", f"'{target_filename}' gedownload.", xbmcgui.NOTIFICATION_INFO, 2000)
@@ -79,5 +69,5 @@ def download_file(path, download_type='standard'):
 
     except Exception as e:
         dialog.close()
-        xbmcgui.Dialog().ok("Download Fout", f"Fout bij downloaden van '{target_filename}': {e}")
-        log(f"Error downloading {path}: {e}", xbmc.LOGERROR)
+        xbmcgui.Dialog().ok("Download Fout", f"Fout tijdens downloaden: {str(e)}")
+        log(f"Download error: {e}", xbmc.LOGERROR)
