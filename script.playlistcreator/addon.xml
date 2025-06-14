@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="script.playlistcreator"
        name="Playlist [COLOR gold]C[/COLOR]reator"
-       version="1.7.2"
+       version="1.7.6"
        provider-name="Tha [COLOR gold]G[/COLOR] Thang">
 
     <requires>
@@ -16,45 +16,14 @@
 
     <extension point="kodi.context.item">
         <context-item>
-            <label>Toevoegen aan favorieten</label>
-            <action>RunScript(script.playlistcreator, action=add_favorite, path=$INFO[ListItem.Path])</action>
-            <visible>System.HasAddon(script.playlistcreator)</visible>
-        </context-item>
-
-        <context-item>
-            <label>Verwijderen uit favorieten</label>
-            <action>RunScript(script.playlistcreator, action=remove_favorite, path=$INFO[ListItem.Path])</action>
-            <visible>System.HasAddon(script.playlistcreator)</visible>
-        </context-item>
-
-        <context-item>
-            <label>Maak favorieten-afspeellijst</label>
-            <action>RunScript(script.playlistcreator, action=create_favorites)</action>
-            <visible>System.HasAddon(script.playlistcreator)</visible>
-        </context-item>
-
-        <context-item>
-            <label>Sla Afspelende Stream op (in Stream Set)</label>
-            <action>RunScript(script.playlistcreator, action=save_playing_stream)</action>
-            <visible>System.HasAddon(script.playlistcreator) + Player.Playing</visible>
-        </context-item>
-
-        <context-item>
-            <label>Beheer Stream Sets</label>
-            <action>RunScript(script.playlistcreator, action=manage_stream_sets)</action>
-            <visible>System.HasAddon(script.playlistcreator)</visible>
-        </context-item>
-
-        <context-item>
             <label>Download Nu Afspelende [COLOR darkblue]Video[/COLOR]</label>
             <action>RunScript(script.playlistcreator, action=download_file, download_type=standard, path=$INFO[ListItem.Path])</action>
-            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path,.mp4|.mkv|.avi|.mov|.wmv|.webm|.flv|.mpg|.mpeg)</visible>
+            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path,.mp4|.mkv|.avi|.mov|.webm|.flv|.wmv|.mpg|.mpeg)</visible>
         </context-item>
-
         <context-item>
             <label>Download Nu Afspelende [COLOR darkblue]X[/COLOR]</label>
             <action>RunScript(script.playlistcreator, action=download_file, download_type=adult, path=$INFO[ListItem.Path])</action>
-            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path,.mp4|.mkv|.avi|.mov|.wmv|.webm|.flv|.mpg|.mpeg)</visible>
+            <visible>System.HasAddon(script.playlistcreator) + String.EndsWith(ListItem.Path,.mp4|.mkv|.avi|.mov|.webm|.flv|.wmv|.mpg|.mpeg)</visible>
         </context-item>
     </extension>
 
@@ -70,8 +39,7 @@
             <fanart>resources/fanart.jpg</fanart>
         </assets>
         <news>
-            <item>[B]Versie 1.7.2 (2025-06-13):[/B] Uitgebreide sorteeropties voor afspeellijsten (mappen, bestanden, nieuwste bovenaan). Weergaveopties voor foldernamen. 'Toelichting &amp; Help' in hoofdmenu. Verbeterde code en optimalisaties.</item>
-            <item>[B]Versie 1.7.0 (2025-06-12):[/B] Smart Folder, Favorieten beheer, Stream Set Manager, Verbeterde Download Manager, Geplande updates via service. Algemene code-opschoning.</item>
+            <item>Ontdek de nieuwste functies: Verbeterde download mogelijkheden, geavanceerd afspeellijstbeheer met Smart Folders en Favorieten, een krachtige Stream Set Manager, en automatische updates. Tevens uitgebreide sorteer- en weergaveopties voor je mediacollectie.</item>
         </news>
     </extension>
 </addon>
